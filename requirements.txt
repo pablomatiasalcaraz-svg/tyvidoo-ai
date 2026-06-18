@@ -1,0 +1,6 @@
+streamlit
+supabase
+bcrypt
+openai
+openai-whisper
+yt-dlp
