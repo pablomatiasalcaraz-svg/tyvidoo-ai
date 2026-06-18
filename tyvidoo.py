@@ -55,6 +55,21 @@ st.markdown("""
         margin: 0 auto 30px auto; line-height: 1.5; text-align: center; 
     }
     
+    /* DASHBOARD PREMIUM */
+    .dash-header {
+        background: linear-gradient(135deg, #151515 0%, #0a0a0a 100%);
+        padding: 40px; border-radius: 20px; border: 1px solid #222; margin-bottom: 40px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .dash-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
+    .dash-sub { color: #888; font-size: 1.1rem; }
+    
+    .glass-card {
+        background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 20px; padding: 20px; text-align: center; transition: all 0.3s ease;
+    }
+    .glass-card:hover { transform: translateY(-5px); border: 1px solid rgba(255,255,255,0.2); }
+
     /* FIX INPUTS Y BOTONES */
     .stButton>button[kind="primary"] {
         background-color: #ffffff !important; color: #000000 !important; font-weight: 800 !important;
@@ -113,7 +128,7 @@ def registrar_usuario(email, password):
     try:
         password_bytes = password.strip()[:72].encode('utf-8')
         hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode('utf-8')
-        supabase.table("usuarios").insert({"email": email, "password_hash": hashed_password, "creditos": 10}).execute()
+        supabase.table("usuarios").insert({"email": email, "password_hash": hashed_password, "creditos": 30}).execute()
         return True
     except: return False
 
@@ -174,9 +189,26 @@ def procesar_video_master(url, cant, d_min, d_max, prog):
     v = os.path.abspath("archivos_brutos/v.mp4")
     a = os.path.abspath("archivos_brutos/a.mp3")
     
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>📥 Descargando...</h3></div>", unsafe_allow_html=True)
-    with yt_dlp.YoutubeDL({'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', 'outtmpl': v}) as ydl: 
+    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>📥 Saltando cortafuegos de YouTube...</h3></div>", unsafe_allow_html=True)
+    
+    # -------------------------------------------------------------
+    # NUEVO PARCHE ANTI-403: Forzamos cliente móvil (Android/iOS)
+    # y evitamos las conexiones IPv6 (donde YouTube bloquea más la nube)
+    # -------------------------------------------------------------
+    ydl_opts = {
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        'outtmpl': v,
+        'geo_bypass': True,
+        'nocheckcertificate': True,
+        'quiet': True,
+        'no_warnings': True,
+        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
+        'source_address': '0.0.0.0' # Fuerza a usar IPv4
+    }
+    
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl: 
         ydl.download([url])
+        
     subprocess.run(["ffmpeg", "-y", "-i", v, "-q:a", "0", "-map", "a", a], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🧠 Transcribiendo...</h3></div>", unsafe_allow_html=True)
@@ -244,7 +276,6 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
 # ==========================================
 if not st.session_state.logged_in:
     
-    # 1. NAVBAR
     col_logo, col_space, col_login = st.columns([2, 5, 1])
     with col_logo:
         st.markdown("<div class='top-nav'><div class='nav-logo'>✂️ Tyvidoo AI</div></div>", unsafe_allow_html=True)
@@ -255,37 +286,26 @@ if not st.session_state.logged_in:
             st.rerun()
 
     if not st.session_state.show_auth:
-        
-        # 2. HERO SECTION
-        st.markdown("""
-        <div style='text-align: center; margin-top: 20px;'>
-            <p class='hero-tag'>#1 AI VIDEO CLIPPING TOOL</p>
-            <h1 class='hero-title'>1 video largo, clips virales infinitos.<br>Crea 10x más rápido.</h1>
-            <p class='hero-subtitle' style='text-align: center; margin: 0 auto 40px auto; max-width: 650px;'>
-                Tyvidoo convierte tus vídeos largos de YouTube en Shorts listos para publicar, con subtítulos dinámicos de estilo Hormozi.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        h_html_1 = "<div style='text-align: center; margin-top: 20px;'><p class='hero-tag'>#1 AI VIDEO CLIPPING TOOL</p>"
+        h_html_2 = "<h1 class='hero-title'>1 video largo, clips virales infinitos.<br>Crea 10x más rápido.</h1>"
+        h_html_3 = "<p class='hero-subtitle'>Tyvidoo convierte tus vídeos largos de YouTube en Shorts listos para publicar, con subtítulos dinámicos de estilo Hormozi.</p></div>"
+        st.markdown(h_html_1 + h_html_2 + h_html_3, unsafe_allow_html=True)
 
-        # 3. EDITOR RÁPIDO EN LANDING (Limpio y alineado sin cajas rotas)
         col_pad1, col_center, col_pad2 = st.columns([1, 8, 1])
         with col_center:
             url_demo = st.text_input("Enlace del vídeo original", placeholder="🔗 Pega tu enlace de YouTube aquí...")
-            
             c_ed1, c_ed2 = st.columns(2)
             with c_ed1:
-                st.slider("Número de Clips deseados", 5, 20, 10)
+                st.slider("Número de Clips deseados", 5, 30, 10)
             with c_ed2:
                 st.selectbox("Estilo Visual", ["Hormozi 💛", "Podcast 🎙️", "Neón Gaming 👾"])
             
-            st.write("") # Espaciador ligero
+            st.write("")
             if st.button("🚀 Generar mis clips ahora", type="primary", use_container_width=True):
                 st.session_state.show_auth = True
                 st.rerun()
-                
-            st.markdown("<br>", unsafe_allow_html=True) # Espacio inferior
+            st.markdown("<br>", unsafe_allow_html=True)
 
-        # 4. SOCIAL PROOF (Marquee animado)
         m_1 = "<div class='marquee-wrapper'><div class='marquee-content'>"
         m_2 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Me ahorra 10 horas de edición a la semana\" - <b>@creador_es</b></div>"
         m_3 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mis vistas en TikTok se multiplicaron x5\" - <b>@marketing_pro</b></div>"
@@ -294,7 +314,6 @@ if not st.session_state.logged_in:
         m_6 = m_2 + m_3 + m_4 + m_5 + "</div></div>"
         st.markdown(m_1 + m_2 + m_3 + m_4 + m_5 + m_6, unsafe_allow_html=True)
 
-        # 5. EJEMPLOS DE CLIPS
         st.markdown("<div class='section-title'>Resultados de calidad profesional 🎬</div>", unsafe_allow_html=True)
         st.markdown("<div class='section-subtitle'>No edites a ciegas. Así se verán tus clips generados.</div>", unsafe_allow_html=True)
         
@@ -303,24 +322,16 @@ if not st.session_state.logged_in:
         img_podcast = "https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80"
         img_neon = "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80"
         
-        with c_vid1:
-            st.markdown(f"<div class='video-mockup'><img src='{img_hormozi}'><h4 style='margin-top:15px;'>Estilo Hormozi 💛</h4></div>", unsafe_allow_html=True)
-        with c_vid2:
-            st.markdown(f"<div class='video-mockup'><img src='{img_podcast}'><h4 style='margin-top:15px;'>Estilo Podcast 🎙️</h4></div>", unsafe_allow_html=True)
-        with c_vid3:
-            st.markdown(f"<div class='video-mockup'><img src='{img_neon}'><h4 style='margin-top:15px;'>Estilo Neón 👾</h4></div>", unsafe_allow_html=True)
+        with c_vid1: st.markdown(f"<div class='video-mockup'><img src='{img_hormozi}'><h4 style='margin-top:15px;'>Estilo Hormozi 💛</h4></div>", unsafe_allow_html=True)
+        with c_vid2: st.markdown(f"<div class='video-mockup'><img src='{img_podcast}'><h4 style='margin-top:15px;'>Estilo Podcast 🎙️</h4></div>", unsafe_allow_html=True)
+        with c_vid3: st.markdown(f"<div class='video-mockup'><img src='{img_neon}'><h4 style='margin-top:15px;'>Estilo Neón 👾</h4></div>", unsafe_allow_html=True)
 
-        # 6. FEATURES
         st.markdown("<div class='section-title'>Todo lo que necesitas para crecer 📈</div>", unsafe_allow_html=True)
         f_col1, f_col2, f_col3 = st.columns(3)
-        with f_col1:
-            st.markdown("<div class='feature-card'><h2>🎯</h2><h4>Curación con IA</h4><p style='color:#888;'>Nuestra IA detecta las partes con más retención, humor o tensión para asegurar el hook perfecto.</p></div>", unsafe_allow_html=True)
-        with f_col2:
-            st.markdown("<div class='feature-card'><h2>✍️</h2><h4>Subtítulos Dinámicos</h4><p style='color:#888;'>Generamos subtítulos precisos palabra por palabra estilo Alex Hormozi o el que tú elijas.</p></div>", unsafe_allow_html=True)
-        with f_col3:
-            st.markdown("<div class='feature-card'><h2>🎬</h2><h4>Editor Profesional</h4><p style='color:#888;'>Ajusta el inicio y fin al milísegundo, pon tu propio logo de agua y descarga en ZIP.</p></div>", unsafe_allow_html=True)
+        with f_col1: st.markdown("<div class='feature-card'><h2>🎯</h2><h4>Curación con IA</h4><p style='color:#888;'>Nuestra IA detecta las partes con más retención, humor o tensión para asegurar el hook perfecto.</p></div>", unsafe_allow_html=True)
+        with f_col2: st.markdown("<div class='feature-card'><h2>✍️</h2><h4>Subtítulos Dinámicos</h4><p style='color:#888;'>Generamos subtítulos precisos palabra por palabra estilo Alex Hormozi o el que tú elijas.</p></div>", unsafe_allow_html=True)
+        with f_col3: st.markdown("<div class='feature-card'><h2>🎬</h2><h4>Editor Profesional</h4><p style='color:#888;'>Ajusta el inicio y fin al milísegundo, pon tu propio logo de agua y descarga en ZIP.</p></div>", unsafe_allow_html=True)
 
-        # 7. PRICING SECTION CON TOGGLE
         st.markdown("<div class='section-title'>Planes simples y transparentes 💳</div>", unsafe_allow_html=True)
         
         col_tog1, col_tog2, col_tog3 = st.columns([3, 2, 3])
@@ -338,7 +349,7 @@ if not st.session_state.logged_in:
             st.markdown(f"""
             <div class='pricing-card'>
                 <h3>Starter</h3><div class='price'>$0<span>/mes</span></div>
-                <div class='pricing-features'>✔️ 10 créditos gratis<br>✔️ Exportación a 720p<br>✔️ Marca de agua de Tyvidoo<br>❌ Soporte prioritario</div>
+                <div class='pricing-features'>✔️ <b>30 créditos gratis</b><br>✔️ Exportación a 720p<br>✔️ Marca de agua de Tyvidoo<br>❌ Soporte prioritario</div>
                 <button style="width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white;">Empezar Gratis</button>
             </div>
             """, unsafe_allow_html=True)
@@ -362,31 +373,23 @@ if not st.session_state.logged_in:
             </div>
             """, unsafe_allow_html=True)
 
-        # 8. QUIÉNES SOMOS & SOPORTE
         st.markdown("<div class='section-title'>Conoce Tyvidoo 🤝</div>", unsafe_allow_html=True)
         info_col1, info_col2 = st.columns(2)
         with info_col1:
             st.markdown("""
             <div class='info-card'>
                 <h3>👋 Nuestra Misión</h3>
-                <p style="color:#888; line-height: 1.6; margin-top: 15px;">
-                Tyvidoo nació para democratizar la creación de contenido. Creemos que no necesitas pagar miles de euros a una agencia para tener clips virales de calidad. Nuestro equipo de ingenieros ha entrenado a la IA para que piense, corte y edite exactamente igual que un humano experto en retención.
-                </p>
+                <p style="color:#888; line-height: 1.6; margin-top: 15px;">Tyvidoo nació para democratizar la creación de contenido. Creemos que no necesitas pagar miles de euros a una agencia para tener clips virales de calidad.</p>
             </div>
             """, unsafe_allow_html=True)
         with info_col2:
             st.markdown("""
             <div class='info-card'>
                 <h3>🎧 Soporte 24/7</h3>
-                <p style="color:#888; line-height: 1.6; margin-top: 15px;">
-                No te dejamos solo frente a una máquina. Si un clip no se renderiza bien, si tienes dudas sobre qué plantilla usar o si necesitas ayuda con la facturación, estamos aquí.
-                <br><br>
-                📩 Escríbenos a: <b>soporte@tyvidoo.com</b>
-                </p>
+                <p style="color:#888; line-height: 1.6; margin-top: 15px;">No te dejamos solo frente a una máquina. Si tienes dudas, estamos aquí.<br><br>📩 Escríbenos a: <b>soporte@tyvidoo.com</b></p>
             </div>
             """, unsafe_allow_html=True)
 
-    # VISTA DE REGISTRO / LOGIN (Modal)
     else:
         st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 800;'>Comienza a crear</h2></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -396,7 +399,7 @@ if not st.session_state.logged_in:
                 with st.form("reg_form"):
                     e_reg = st.text_input("Correo")
                     p_reg = st.text_input("Contraseña", type="password")
-                    if st.form_submit_button("Crear cuenta (10 créditos gratis)", type="primary", use_container_width=True):
+                    if st.form_submit_button("Crear cuenta (30 créditos gratis)", type="primary", use_container_width=True):
                         if registrar_usuario(e_reg, p_reg): st.success("✅ Creada. Inicia sesión.")
                         else: st.error("⚠️ Error al crear.")
             with tab2:
@@ -436,9 +439,10 @@ else:
             st.rerun()
             
         st.divider()
-        cant_clips = st.slider("Clips", 1, 10, 3)
-        dur_clips = st.slider("Duración", 15, 90, (20, 45))
-        plantilla = st.selectbox("Estilo", ["Hormozi 💛", "Podcast 🎙️", "Neón 👾"])
+        st.markdown("<b>⚙️ Configuración del Motor</b>", unsafe_allow_html=True)
+        cant_clips = st.slider("Clips a extraer", 1, 30, 10)
+        dur_clips = st.slider("Duración aprox. (seg)", 15, 90, (20, 45))
+        plantilla = st.selectbox("Estilo Visual", ["Hormozi 💛", "Podcast 🎙️", "Neón 👾"])
         
         if plantilla == "Hormozi 💛": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#FFFFFF", "#000000", "#FFFF00", 18, 2, 120, 45
         elif plantilla == "Podcast 🎙️": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Arial", "#FFFFFF", "#333333", "#FFFFFF", 12, 1, 80, 35
@@ -446,21 +450,26 @@ else:
         col_s_ass = hex_a_ass(c_s)
         
         st.divider()
-        archivo_logo = st.file_uploader("Logo (PNG)", type=["png"])
+        archivo_logo = st.file_uploader("Marca de Agua (PNG)", type=["png"])
 
-    st.markdown("<h2 style='font-weight: 800; margin-bottom: 30px;'>Crear proyecto</h2>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class='dash-header'>
+        <div class='dash-title'>✂️ Nuevo Proyecto</div>
+        <div class='dash-sub'>Pega el enlace de un vídeo de YouTube y deja que la IA trabaje por ti.</div>
+    </div>
+    """, unsafe_allow_html=True)
     
     col_input, col_btn = st.columns([4, 1])
     with col_input:
-        url_video = st.text_input("", placeholder="🔗 Enlace de YouTube...", label_visibility="collapsed")
+        url_video = st.text_input("", placeholder="🔗 Pegar URL de YouTube...", label_visibility="collapsed")
     with col_btn:
         btn_crear = st.button("Renderizar", type="primary", use_container_width=True)
 
     espacio_animacion = st.empty()
 
     if btn_crear:
-        if not url_video: st.warning("Pega un enlace.")
-        elif creditos < cant_clips: st.error("❌ Sin créditos.")
+        if not url_video: st.warning("Por favor, pega un enlace primero.")
+        elif creditos < cant_clips: st.error("❌ No tienes suficientes créditos para esta acción.")
         else:
             st.session_state.mis_clips_data = []
             logo_path = "logo_tmp.png" if archivo_logo else None
@@ -480,16 +489,17 @@ else:
                     st.rerun()
             except Exception as e:
                 espacio_animacion.empty()
-                st.error(f"Error: {e}")
+                st.error(f"Error 403: YouTube ha detectado el servidor en la nube. ¡Intenta con un vídeo diferente o espera unos minutos a que pase el bloqueo!")
 
     if st.session_state.mis_clips_data:
         st.divider()
+        st.markdown("<h3 style='margin-bottom: 20px;'>Tus clips generados</h3>", unsafe_allow_html=True)
         cols = st.columns(3)
         for i, clip in enumerate(st.session_state.mis_clips_data):
             with cols[i % 3]:
                 st.markdown(f"<div class='glass-card'>", unsafe_allow_html=True)
                 st.video(clip["ruta"])
-                st.markdown(f"**{clip['titulo']}**")
+                st.markdown(f"<b style='display:block; margin: 10px 0;'>{clip['titulo']}</b>", unsafe_allow_html=True)
                 
                 with open(clip["ruta"], "rb") as f: 
                     st.download_button(
