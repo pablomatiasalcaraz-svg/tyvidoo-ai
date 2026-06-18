@@ -189,21 +189,27 @@ def procesar_video_master(url, cant, d_min, d_max, prog):
     v = os.path.abspath("archivos_brutos/v.mp4")
     a = os.path.abspath("archivos_brutos/a.mp3")
     
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>📥 Saltando cortafuegos de YouTube...</h3></div>", unsafe_allow_html=True)
+    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>📥 Forzando conexión segura (Disfraz iOS)...</h3></div>", unsafe_allow_html=True)
     
     # -------------------------------------------------------------
-    # NUEVO PARCHE ANTI-403: Forzamos cliente móvil (Android/iOS)
-    # y evitamos las conexiones IPv6 (donde YouTube bloquea más la nube)
+    # EL DISFRAZ DEFINITIVO ANTI-403: Simular iPhone y formato básico
     # -------------------------------------------------------------
     ydl_opts = {
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        'format': 'best', # A veces pedir vídeo y audio por separado bloquea, pedimos el paquete básico
         'outtmpl': v,
         'geo_bypass': True,
         'nocheckcertificate': True,
         'quiet': True,
         'no_warnings': True,
-        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
-        'source_address': '0.0.0.0' # Fuerza a usar IPv4
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['ios', 'web'] # Engañamos a YouTube fingiendo ser la App de iOS
+            }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        }
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl: 
@@ -288,7 +294,7 @@ if not st.session_state.logged_in:
     if not st.session_state.show_auth:
         h_html_1 = "<div style='text-align: center; margin-top: 20px;'><p class='hero-tag'>#1 AI VIDEO CLIPPING TOOL</p>"
         h_html_2 = "<h1 class='hero-title'>1 video largo, clips virales infinitos.<br>Crea 10x más rápido.</h1>"
-        h_html_3 = "<p class='hero-subtitle'>Tyvidoo convierte tus vídeos largos de YouTube en Shorts listos para publicar, con subtítulos dinámicos de estilo Hormozi.</p></div>"
+        h_html_3 = "<p class='hero-subtitle' style='text-align: center; margin: 0 auto 40px auto; max-width: 650px;'>Tyvidoo convierte tus vídeos largos de YouTube en Shorts listos para publicar, con subtítulos dinámicos de estilo Hormozi.</p></div>"
         st.markdown(h_html_1 + h_html_2 + h_html_3, unsafe_allow_html=True)
 
         col_pad1, col_center, col_pad2 = st.columns([1, 8, 1])
@@ -489,7 +495,7 @@ else:
                     st.rerun()
             except Exception as e:
                 espacio_animacion.empty()
-                st.error(f"Error 403: YouTube ha detectado el servidor en la nube. ¡Intenta con un vídeo diferente o espera unos minutos a que pase el bloqueo!")
+                st.error(f"Error: La conexión en la nube sigue bloqueada por YouTube ({e}). Para producción 100% estable, se requiere configurar un servicio de proxy residencial.")
 
     if st.session_state.mis_clips_data:
         st.divider()
