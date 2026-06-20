@@ -14,11 +14,15 @@ import bcrypt
 
 # --- CONFIGURACIÓN DE SECRETOS ---
 try:
-    API_KEY = st.secrets["OPENAI_API_KEY"]
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+    # Busca primero en Railway, si no hay nada, busca en local (secrets.toml)
+    API_KEY = os.environ.get("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+    SUPABASE_URL = os.environ.get("SUPABASE_URL") or st.secrets.get("SUPABASE_URL")
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY")
+    
+    if not API_KEY or not SUPABASE_URL or not SUPABASE_KEY:
+        raise ValueError("Faltan contraseñas")
 except Exception as e:
-    st.error("⚠️ Faltan las claves en .streamlit/secrets.toml")
+    st.error("⚠️ Faltan las claves. Asegúrate de ponerlas en la pestaña 'Variables' de Railway.")
     st.stop()
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
