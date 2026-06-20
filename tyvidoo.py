@@ -160,7 +160,7 @@ def procesar_video_youtube(url, cant, d_min, d_max, prog):
     
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>📥 Descargando desde YouTube...</h3></div>", unsafe_allow_html=True)
     ydl_opts = {
-        'format': 'best',
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         'outtmpl': v,
         'geo_bypass': True,
         'nocheckcertificate': True,
