@@ -424,8 +424,9 @@ else:
                     st.rerun()
             except Exception as e:
                 espacio_animacion.empty()
-                if "DRM" in str(e) or "403" in str(e):
-                    st.error("Error: YouTube ha bloqueado la descarga de este enlace por derechos de autor o IP en la nube. ¡Usa la Pestaña de 'Subir Archivo' para esquivar este bloqueo!")
+                error_msg = str(e).lower()
+                if "drm" in error_msg or "403" in error_msg or "bot" in error_msg or "sign in" in error_msg:
+                    st.error("⚠️ YouTube ha protegido este vídeo contra descargas automáticas (Anti-Bot/DRM). Por favor, usa la pestaña 'Subir Archivo Manual' para procesarlo.")
                 else:
                     st.error(f"Error procesando el vídeo: {e}")
 
