@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 6. Arrancamos la aplicación leyendo el puerto dinámico de Railway
-CMD sh -c "streamlit run tyvidoo.py --server.port $PORT --server.address 0.0.0.0"
+CMD ["streamlit", "run", "tyvidoo.py", "--server.port=8501", "--server.address=0.0.0.0"]
