@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import json
 import subprocess
-import whisper
 import yt_dlp
 import re
 import shutil
@@ -135,19 +134,18 @@ def hex_a_ass(hex_color): return f"&H00{hex_color.lstrip('#')[4:6]}{hex_color.ls
 def segundos_a_srt(segundos): return f"{int(segundos//3600):02d}:{int((segundos%3600)//60):02d}:{int(segundos%60):02d},{int((segundos-int(segundos))*1000):03d}"
 
 def generar_srt_por_palabras(res, ini, fin, srt):
+    # Adaptado para leer directamente el formato de la API de OpenAI
     with open(srt, "w", encoding="utf-8") as f:
         c = 1
-        for seg in res["segments"]:
-            if "words" in seg:
-                for p in seg["words"]:
-                    if p["end"] > ini and p["start"] < fin:
-                        start_aj = max(0.0, p["start"]-ini)
-                        end_aj = min(fin-ini, p["end"]-ini)
-                        if end_aj > start_aj:
-                            caracteres_malos = " ,.?!:;()'\"[]{}"
-                            palabra = p['word'].strip(caracteres_malos).upper()
-                            f.write(f"{c}\n{segundos_a_srt(start_aj)} --> {segundos_a_srt(end_aj)}\n{palabra}\n\n")
-                            c += 1
+        for p in res.get("words", []):
+            if p["end"] > ini and p["start"] < fin:
+                start_aj = max(0.0, p["start"]-ini)
+                end_aj = min(fin-ini, p["end"]-ini)
+                if end_aj > start_aj:
+                    caracteres_malos = " ,.?!:;()'\"[]{}"
+                    palabra = p['word'].strip(caracteres_malos).upper()
+                    f.write(f"{c}\n{segundos_a_srt(start_aj)} --> {segundos_a_srt(end_aj)}\n{palabra}\n\n")
+                    c += 1
 
 def procesar_video_youtube(url, cant, d_min, d_max, prog):
     for d in ["archivos_brutos", "clips_finales"]:
@@ -169,7 +167,8 @@ def procesar_video_youtube(url, cant, d_min, d_max, prog):
         'http_headers': { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15' }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl: ydl.download([url])
-    subprocess.run(["ffmpeg", "-y", "-i", v, "-q:a", "0", "-map", "a", a], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    # Extraemos el audio muy comprimido (32k) para no chocar con el límite de 25MB de OpenAI
+    subprocess.run(["ffmpeg", "-y", "-i", v, "-b:a", "32k", "-map", "a", a], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     return procesar_ia(a, v, cant, d_min, d_max, prog)
 
 def procesar_video_local(archivo_path, cant, d_min, d_max, prog):
@@ -181,20 +180,32 @@ def procesar_video_local(archivo_path, cant, d_min, d_max, prog):
 
     a = os.path.abspath("archivos_brutos/a.mp3")
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎵 Extrayendo audio del archivo...</h3></div>", unsafe_allow_html=True)
-    subprocess.run(["ffmpeg", "-y", "-i", archivo_path, "-q:a", "0", "-map", "a", a], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    # Audio comprimido para evitar límite de OpenAI
+    subprocess.run(["ffmpeg", "-y", "-i", archivo_path, "-b:a", "32k", "-map", "a", a], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     return procesar_ia(a, archivo_path, cant, d_min, d_max, prog)
 
 def procesar_ia(a, v, cant, d_min, d_max, prog):
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🧠 Transcribiendo con Inteligencia Artificial...</h3></div>", unsafe_allow_html=True)
-    res_w = whisper.load_model("base").transcribe(a, task="transcribe", word_timestamps=True)
+    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🧠 Transcribiendo a la velocidad de la luz (API)...</h3></div>", unsafe_allow_html=True)
+    
+    # 1. TRANSCRIPCIÓN CON LA API DE OPENAI (SUSTITUYE AL MODELO LOCAL)
+    client = OpenAI(api_key=API_KEY)
+    with open(a, "rb") as audio_file:
+        res_raw = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file,
+            response_format="verbose_json",
+            timestamp_granularities=["word"] # Pedimos los tiempos por palabra
+        )
+    
+    res_w = res_raw.model_dump() if hasattr(res_raw, 'model_dump') else res_raw
     st.session_state.whisper_data = res_w
     st.session_state.video_bruto_path = v
-    if res_w["segments"]: st.session_state.duracion_max_video = res_w["segments"][-1]["end"]
+    if res_w.get("words"): st.session_state.duracion_max_video = res_w["words"][-1]["end"]
 
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎯 Detectando momentos virales...</h3></div>", unsafe_allow_html=True)
+    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎯 Detectando momentos virales con GPT...</h3></div>", unsafe_allow_html=True)
     prompt_completo = f"Actúa como editor experto. Extrae EXACTAMENTE {cant} clips. DURACIÓN: {d_min}-{d_max} segundos. NO cortes en {d_min}s por pereza, busca el final lógico. Títulos clickbait MAX 5 PALABRAS. Sin emojis. JSON exacto:\n" + '{"clips": [{"inicio": 10.5, "fin": 32.0, "titulo": "TITULO"}]}'
     
-    res = OpenAI(api_key=API_KEY).chat.completions.create(
+    res = client.chat.completions.create(
         model="gpt-4o-mini", messages=[{"role": "system", "content": prompt_completo}, {"role": "user", "content": res_w['text']}], response_format={"type": "json_object"}
     )
     clips = json.loads(res.choices[0].message.content).get("clips", [])
