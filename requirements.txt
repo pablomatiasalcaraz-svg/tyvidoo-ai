@@ -1,6 +1,5 @@
-streamlit
-supabase
-bcrypt
-openai
-openai-whisper
-yt-dlp
+streamlit==1.32.0
+openai==1.14.0
+supabase==2.3.0
+bcrypt==4.1.2
+yt-dlp==2023.12.30
