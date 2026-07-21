@@ -1,5 +1,5 @@
 streamlit==1.32.0
-openai==1.14.0
+openai
 supabase
 bcrypt==4.1.2
 yt-dlp==2023.12.30
