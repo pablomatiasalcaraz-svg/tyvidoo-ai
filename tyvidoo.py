@@ -25,7 +25,7 @@ except Exception as e:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# --- CONFIGURACIÓN DE PÁGINA Y CSS ---
+# --- CONFIGURACIÓN DE PÁGINA Y CSS PREMIUM ---
 st.set_page_config(page_title="Tyvidoo | AI Video Clipping Tool", page_icon="✂️", layout="wide")
 
 st.markdown("""
@@ -41,6 +41,10 @@ st.markdown("""
     .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 40px; }
     .nav-logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #FFFFFF, #AAAAAA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     
+    .hero-tag { color: #888; font-size: 14px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; }
+    .hero-title { font-size: 4rem; font-weight: 900; line-height: 1.1; letter-spacing: -2px; margin-bottom: 20px; }
+    .hero-subtitle { font-size: 1.2rem; color: #999; font-weight: 400; max-width: 650px; margin: 0 auto 30px auto; line-height: 1.5; text-align: center; }
+    
     .dash-header { background: linear-gradient(135deg, #151515 0%, #0a0a0a 100%); padding: 40px; border-radius: 20px; border: 1px solid #222; margin-bottom: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
     .dash-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
     .dash-sub { color: #888; font-size: 1.1rem; }
@@ -54,6 +58,25 @@ st.markdown("""
     .stTabs [data-baseweb="tab-list"] { gap: 24px; }
     .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: transparent; border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px; font-weight: 600; font-size: 16px; }
     .stTabs [aria-selected="true"] { color: #ffffff !important; border-bottom: 2px solid #ffffff !important; }
+    
+    .marquee-wrapper { overflow: hidden; white-space: nowrap; margin-top: 40px; padding: 20px 0; border-top: 1px solid #111; border-bottom: 1px solid #111;}
+    .marquee-content { display: inline-block; animation: marquee 25s linear infinite; }
+    .review-card { display: inline-block; background: rgba(255,255,255,0.03); padding: 15px 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05); margin-right: 20px; font-size: 14px; color: #ccc; }
+    .review-card b { color: #fff; }
+    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+    .section-title { font-size: 2.5rem; font-weight: 800; text-align: center; margin: 80px 0 20px 0; letter-spacing: -1px; }
+    .section-subtitle { text-align: center; color: #888; margin-bottom: 40px; font-size: 1.1rem; }
+    
+    .feature-card, .info-card { background: #0a0a0a; border: 1px solid #222; border-radius: 20px; padding: 30px; height: 100%; }
+    .pricing-card { background: #0a0a0a; border: 1px solid #222; border-radius: 20px; padding: 40px 30px; text-align: center; position: relative; height: 100%; }
+    .pricing-card.pro { border: 2px solid #ffffff; background: linear-gradient(180deg, #111 0%, #050505 100%); transform: scale(1.05); z-index: 10;}
+    .badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #fff; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .price { font-size: 3rem; font-weight: 900; margin: 20px 0; }
+    .price span { font-size: 1rem; color: #666; font-weight: normal; }
+    .pricing-features { text-align: left; margin: 30px 0; color: #aaa; font-size: 14px; line-height: 2; }
+    .video-mockup { background: #111; border-radius: 20px; padding: 10px; border: 1px solid #333; text-align: center; }
+    .video-mockup img { border-radius: 10px; width: 100%; object-fit: cover; aspect-ratio: 9/16; opacity: 0.8;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -123,7 +146,7 @@ def generar_srt_por_palabras(res, ini, fin, srt):
                     f.write(f"{c}\n{segundos_a_srt(start_aj)} --> {segundos_a_srt(end_aj)}\n{palabra}\n\n")
                     c += 1
 
-def procesar_video_youtube(url, cant, d_min, d_max, prog):
+def procesar_video_youtube(url, cant, d_min, d_max, prog, modo_prueba=False):
     for d in ["archivos_brutos", "clips_finales"]:
         os.makedirs(d, exist_ok=True)
         for a in os.listdir(d): 
@@ -143,10 +166,16 @@ def procesar_video_youtube(url, cant, d_min, d_max, prog):
         'http_headers': { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15' }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl: ydl.download([url])
-    subprocess.run(["ffmpeg", "-y", "-i", v, "-b:a", "32k", "-map", "a", a], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    
+    # NUEVO MODO PRUEBAS: CORTA EL AUDIO A 60 SEGUNDOS
+    cmd_audio = ["ffmpeg", "-y", "-i", v]
+    if modo_prueba: cmd_audio.extend(["-t", "60"])
+    cmd_audio.extend(["-b:a", "32k", "-map", "a", a])
+    
+    subprocess.run(cmd_audio, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     return procesar_ia(a, v, cant, d_min, d_max, prog)
 
-def procesar_video_local(archivo_path, cant, d_min, d_max, prog):
+def procesar_video_local(archivo_path, cant, d_min, d_max, prog, modo_prueba=False):
     for d in ["archivos_brutos", "clips_finales"]:
         os.makedirs(d, exist_ok=True)
         for archivo in os.listdir(d): 
@@ -155,7 +184,13 @@ def procesar_video_local(archivo_path, cant, d_min, d_max, prog):
 
     a = os.path.abspath("archivos_brutos/a.mp3")
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎵 Extrayendo audio del archivo...</h3></div>", unsafe_allow_html=True)
-    subprocess.run(["ffmpeg", "-y", "-i", archivo_path, "-b:a", "32k", "-map", "a", a], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    
+    # NUEVO MODO PRUEBAS: CORTA EL AUDIO A 60 SEGUNDOS
+    cmd_audio = ["ffmpeg", "-y", "-i", archivo_path]
+    if modo_prueba: cmd_audio.extend(["-t", "60"])
+    cmd_audio.extend(["-b:a", "32k", "-map", "a", a])
+    
+    subprocess.run(cmd_audio, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     return procesar_ia(a, archivo_path, cant, d_min, d_max, prog)
 
 def procesar_ia(a, v, cant, d_min, d_max, prog):
@@ -207,16 +242,17 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
     else: 
         f_base += "[m_base]null[m];"
 
-    # COORDENADAS FIJAS PARA EVITAR EL CENTRO
+    # COORDENADAS FIJAS PARA EVITAR EL CENTRO Y TAMAÑOS GRANDES
     estilo_srt = f"PlayResX=1080,PlayResY=1920,Encoding=UTF-8,FontSize={ass_fs},PrimaryColour={col_sub},OutlineColour=&H40000000&,BorderStyle=1,Outline={out},Alignment=2,MarginV={mv},Bold=1"
     f_txt = f"[m]drawtext=text=' {tit_safe} ':fontfile={font}:fontsize={tit_fs}:fontcolor={col_tit}:x=(w-text_w)/2:y=220:box=1:boxcolor={col_bg}@0.95:boxborderw=20:enable=between(t\\,0\\,5)[w_txt];[w_txt]subtitles=filename={srt}:force_style='{estilo_srt}'[f]"
     
-    cmd.extend(["-filter_complex", f_base + f_txt, "-map", "[f]", "-map", "0:a", "-c:v", "libx264", "-c:a", "aac", "-movflags", "+faststart", out_vid])
+    # AÑADIDO MODO TURBO (-preset ultrafast)
+    cmd.extend(["-filter_complex", f_base + f_txt, "-map", "[f]", "-map", "0:a", "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac", "-movflags", "+faststart", out_vid])
     subprocess.run(cmd, capture_output=True)
     return out_vid if os.path.exists(out_vid) else None
 
 # ==========================================
-# INTERFAZ
+# VISTA 1: LANDING PAGE (NO LOGUEADO)
 # ==========================================
 if not st.session_state.logged_in:
     col_logo, col_space, col_login = st.columns([2, 5, 1])
@@ -228,12 +264,83 @@ if not st.session_state.logged_in:
             st.rerun()
 
     if not st.session_state.show_auth:
-        st.markdown("<div style='text-align: center; margin-top: 20px;'><h1 class='hero-title'>De 1 vídeo largo a 10 clips virales.</h1></div>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style='text-align: center; margin-top: 20px;'>
+            <p class='hero-tag'>#1 AI VIDEO CLIPPING TOOL</p>
+            <h1 class='hero-title'>De 1 vídeo largo a 10 clips virales.<br>Automáticamente.</h1>
+            <p class='hero-subtitle'>Tyvidoo convierte tus vídeos y podcasts en Shorts listos para publicar, con la IA buscando los mejores momentos y añadiendo subtítulos estilo Hormozi.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
         col_pad1, col_center, col_pad2 = st.columns([1, 8, 1])
         with col_center:
+            st.markdown("<div style='background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.2); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 20px;'>", unsafe_allow_html=True)
+            st.markdown("<h3>Empieza a crear</h3>", unsafe_allow_html=True)
+            
+            tab1, tab2 = st.tabs(["🔴 Pegar enlace de YouTube", "📁 Subir Archivo Manual"])
+            with tab1: st.text_input("YouTube URL", placeholder="🔗 https://www.youtube.com/watch?v=...", label_visibility="collapsed")
+            with tab2: st.file_uploader("Subir Archivo", type=["mp4", "mov"], label_visibility="collapsed")
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+            
             if st.button("🚀 Iniciar Sesión y Generar Clips", type="primary", use_container_width=True):
                 st.session_state.show_auth = True
                 st.rerun()
+
+        m_1 = "<div class='marquee-wrapper'><div class='marquee-content'>"
+        m_2 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Uso el plan gratis comprimiendo mis podcasts. Es brutal\" - <b>@creador_es</b></div>"
+        m_3 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mis vistas en TikTok se multiplicaron x5\" - <b>@marketing_pro</b></div>"
+        m_4 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Subtítulos estilo Hormozi automáticos. Magia.\" - <b>@podcast_latam</b></div>"
+        m_5 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mucho más rápido que otras herramientas caras.\" - <b>@streamer_xd</b></div>"
+        m_6 = m_2 + m_3 + m_4 + m_5 + "</div></div>"
+        st.markdown(m_1 + m_2 + m_3 + m_4 + m_5 + m_6, unsafe_allow_html=True)
+
+        st.markdown("<div class='section-title'>Resultados de calidad profesional 🎬</div>", unsafe_allow_html=True)
+        c_vid1, c_vid2, c_vid3 = st.columns(3)
+        with c_vid1: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Hormozi 💛</h4></div>", unsafe_allow_html=True)
+        with c_vid2: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Podcast 🎙️</h4></div>", unsafe_allow_html=True)
+        with c_vid3: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Neón 👾</h4></div>", unsafe_allow_html=True)
+
+        st.markdown("<div class='section-title'>Planes simples y transparentes 💳</div>", unsafe_allow_html=True)
+        col_tog1, col_tog2, col_tog3 = st.columns([3, 2, 3])
+        with col_tog2:
+            st.markdown("<div style='margin-bottom: 40px; text-align: center;'>", unsafe_allow_html=True)
+            facturacion_anual = st.toggle("Facturación Anual (Ahorra 50%)", value=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+        precio_pro = "9" if facturacion_anual else "19"
+        precio_agencia = "24" if facturacion_anual else "49"
+        texto_mes = "/mes (cobrado anualmente)" if facturacion_anual else "/mes"
+
+        p_col1, p_col2, p_col3 = st.columns(3)
+        with p_col1:
+            st.markdown(f"""
+            <div class='pricing-card'>
+                <h3>Starter Gratuito</h3><div class='price'>$0<span>/mes</span></div>
+                <div class='pricing-features'>✔️ <b>30 créditos gratis</b><br>✔️ Exportación a 720p<br>✔️ Enlaces de YouTube<br>❌ Límite de subida</div>
+                <button style="width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white;">Empezar Gratis</button>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with p_col2:
+            st.markdown(f"""
+            <div class='pricing-card pro'>
+                <div class='badge'>MÁS POPULAR</div>
+                <h3>Creator Pro</h3><div class='price'>${precio_pro}<span>{texto_mes}</span></div>
+                <div class='pricing-features'>✔️ <b>200 minutos al mes</b><br>✔️ <b>Sin límite de tamaño</b><br>✔️ Exportación 1080p HD<br>✔️ Sin marca de agua</div>
+                <button style="width:100%; padding:15px; border-radius:10px; background:white; border:none; color:black; font-weight:bold;">Elegir Pro</button>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with p_col3:
+            st.markdown(f"""
+            <div class='pricing-card'>
+                <h3>Agencia</h3><div class='price'>${precio_agencia}<span>{texto_mes}</span></div>
+                <div class='pricing-features'>✔️ <b>1000 minutos al mes</b><br>✔️ Todos los beneficios Pro<br>✔️ Acceso a la API<br>✔️ Soporte prioritario 24/7</div>
+                <button style="width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white;">Contactar Ventas</button>
+            </div>
+            """, unsafe_allow_html=True)
+
     else:
         st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 800;'>Comienza a crear</h2></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -262,6 +369,9 @@ if not st.session_state.logged_in:
                 st.session_state.show_auth = False
                 st.rerun()
 
+# ==========================================
+# VISTA 2: PANEL DE CONTROL (HÍBRIDO V2)
+# ==========================================
 else:
     creditos = obtener_creditos(st.session_state.user_email)
     
@@ -286,6 +396,11 @@ else:
         
         st.divider()
         archivo_logo = st.file_uploader("Marca de Agua (PNG)", type=["png"])
+        
+        # NUEVO INTERRUPTOR DE MODO PRUEBAS
+        st.divider()
+        st.markdown("<b>🧪 Modo Desarrollador</b>", unsafe_allow_html=True)
+        modo_prueba = st.toggle("Activar Modo Pruebas (Solo procesa 1 min para no gastar saldo)", value=True)
 
     st.markdown("<div class='dash-header'><div class='dash-title'>✂️ Espacio de Trabajo</div></div>", unsafe_allow_html=True)
     
@@ -310,13 +425,13 @@ else:
                 with open(logo_path, "wb") as f: f.write(archivo_logo.getbuffer())
             
             try:
-                if btn_crear_yt: lista = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
+                if btn_crear_yt: lista = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
                 else:
                     os.makedirs("archivos_brutos", exist_ok=True)
                     video_guardado_path = os.path.abspath("archivos_brutos/v.mp4")
                     espacio_animacion.markdown("<h3>📥 Subiendo...</h3>", unsafe_allow_html=True)
                     with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
-                    lista = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
+                    lista = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
                 
                 # Cobramos solo los clips que se hayan podido generar realmente
                 clips_reales = len(lista)
