@@ -13,7 +13,6 @@ import bcrypt
 
 # --- CONFIGURACIÓN DE SECRETOS ---
 try:
-    # Busca primero en Railway, si no hay nada, busca en local (secrets.toml)
     API_KEY = os.environ.get("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
     SUPABASE_URL = os.environ.get("SUPABASE_URL") or st.secrets.get("SUPABASE_URL")
     SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY")
@@ -26,7 +25,7 @@ except Exception as e:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# --- CONFIGURACIÓN DE PÁGINA Y CSS PREMIUM ---
+# --- CONFIGURACIÓN DE PÁGINA Y CSS ---
 st.set_page_config(page_title="Tyvidoo | AI Video Clipping Tool", page_icon="✂️", layout="wide")
 
 st.markdown("""
@@ -42,10 +41,6 @@ st.markdown("""
     .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 40px; }
     .nav-logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #FFFFFF, #AAAAAA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     
-    .hero-tag { color: #888; font-size: 14px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; }
-    .hero-title { font-size: 4rem; font-weight: 900; line-height: 1.1; letter-spacing: -2px; margin-bottom: 20px; }
-    .hero-subtitle { font-size: 1.2rem; color: #999; font-weight: 400; max-width: 650px; margin: 0 auto 30px auto; line-height: 1.5; text-align: center; }
-    
     .dash-header { background: linear-gradient(135deg, #151515 0%, #0a0a0a 100%); padding: 40px; border-radius: 20px; border: 1px solid #222; margin-bottom: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
     .dash-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
     .dash-sub { color: #888; font-size: 1.1rem; }
@@ -59,25 +54,6 @@ st.markdown("""
     .stTabs [data-baseweb="tab-list"] { gap: 24px; }
     .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: transparent; border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px; font-weight: 600; font-size: 16px; }
     .stTabs [aria-selected="true"] { color: #ffffff !important; border-bottom: 2px solid #ffffff !important; }
-    
-    .marquee-wrapper { overflow: hidden; white-space: nowrap; margin-top: 40px; padding: 20px 0; border-top: 1px solid #111; border-bottom: 1px solid #111;}
-    .marquee-content { display: inline-block; animation: marquee 25s linear infinite; }
-    .review-card { display: inline-block; background: rgba(255,255,255,0.03); padding: 15px 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05); margin-right: 20px; font-size: 14px; color: #ccc; }
-    .review-card b { color: #fff; }
-    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-
-    .section-title { font-size: 2.5rem; font-weight: 800; text-align: center; margin: 80px 0 20px 0; letter-spacing: -1px; }
-    .section-subtitle { text-align: center; color: #888; margin-bottom: 40px; font-size: 1.1rem; }
-    
-    .feature-card, .info-card { background: #0a0a0a; border: 1px solid #222; border-radius: 20px; padding: 30px; height: 100%; }
-    .pricing-card { background: #0a0a0a; border: 1px solid #222; border-radius: 20px; padding: 40px 30px; text-align: center; position: relative; height: 100%; }
-    .pricing-card.pro { border: 2px solid #ffffff; background: linear-gradient(180deg, #111 0%, #050505 100%); transform: scale(1.05); z-index: 10;}
-    .badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #fff; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-    .price { font-size: 3rem; font-weight: 900; margin: 20px 0; }
-    .price span { font-size: 1rem; color: #666; font-weight: normal; }
-    .pricing-features { text-align: left; margin: 30px 0; color: #aaa; font-size: 14px; line-height: 2; }
-    .video-mockup { background: #111; border-radius: 20px; padding: 10px; border: 1px solid #333; text-align: center; }
-    .video-mockup img { border-radius: 10px; width: 100%; object-fit: cover; aspect-ratio: 9/16; opacity: 0.8;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -99,8 +75,7 @@ def registrar_usuario(email, password):
         supabase.table("usuarios").insert({"email": email, "password_hash": hashed_password, "creditos": 30}).execute()
         return True, ""
     except Exception as e: 
-        print(f"ERROR DE SUPABASE: {e}")
-        return False, str(e)  # Devolvemos el error exacto para mostrarlo en pantalla
+        return False, str(e)
 
 def login_usuario(email, password):
     email = email.lower().strip()
@@ -136,7 +111,6 @@ def hex_a_ass(hex_color): return f"&H00{hex_color.lstrip('#')[4:6]}{hex_color.ls
 def segundos_a_srt(segundos): return f"{int(segundos//3600):02d}:{int((segundos%3600)//60):02d}:{int(segundos%60):02d},{int((segundos-int(segundos))*1000):03d}"
 
 def generar_srt_por_palabras(res, ini, fin, srt):
-    # Adaptado para leer directamente el formato de la API de OpenAI
     with open(srt, "w", encoding="utf-8") as f:
         c = 1
         for p in res.get("words", []):
@@ -169,7 +143,6 @@ def procesar_video_youtube(url, cant, d_min, d_max, prog):
         'http_headers': { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15' }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl: ydl.download([url])
-    # Extraemos el audio muy comprimido (32k) para no chocar con el límite de 25MB de OpenAI
     subprocess.run(["ffmpeg", "-y", "-i", v, "-b:a", "32k", "-map", "a", a], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     return procesar_ia(a, v, cant, d_min, d_max, prog)
 
@@ -182,21 +155,20 @@ def procesar_video_local(archivo_path, cant, d_min, d_max, prog):
 
     a = os.path.abspath("archivos_brutos/a.mp3")
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎵 Extrayendo audio del archivo...</h3></div>", unsafe_allow_html=True)
-    # Audio comprimido para evitar límite de OpenAI
     subprocess.run(["ffmpeg", "-y", "-i", archivo_path, "-b:a", "32k", "-map", "a", a], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     return procesar_ia(a, archivo_path, cant, d_min, d_max, prog)
 
 def procesar_ia(a, v, cant, d_min, d_max, prog):
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🧠 Transcribiendo a la velocidad de la luz (API)...</h3></div>", unsafe_allow_html=True)
+    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🧠 Transcribiendo en Español (API)...</h3></div>", unsafe_allow_html=True)
     
-    # 1. TRANSCRIPCIÓN CON LA API DE OPENAI (SUSTITUYE AL MODELO LOCAL)
     client = OpenAI(api_key=API_KEY)
     with open(a, "rb") as audio_file:
         res_raw = client.audio.transcriptions.create(
             model="whisper-1",
             file=audio_file,
             response_format="verbose_json",
-            timestamp_granularities=["word"] # Pedimos los tiempos por palabra
+            timestamp_granularities=["word"],
+            language="es" # OBLIGAMOS A QUE SEA EN ESPAÑOL
         )
     
     res_w = res_raw.model_dump() if hasattr(res_raw, 'model_dump') else res_raw
@@ -204,14 +176,19 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
     st.session_state.video_bruto_path = v
     if res_w.get("words"): st.session_state.duracion_max_video = res_w["words"][-1]["end"]
 
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎯 Detectando momentos virales con GPT...</h3></div>", unsafe_allow_html=True)
-    prompt_completo = f"Actúa como editor experto. Extrae EXACTAMENTE {cant} clips. DURACIÓN: {d_min}-{d_max} segundos. NO cortes en {d_min}s por pereza, busca el final lógico. Títulos clickbait MAX 5 PALABRAS. Sin emojis. JSON exacto:\n" + '{"clips": [{"inicio": 10.5, "fin": 32.0, "titulo": "TITULO"}]}'
+    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎯 Buscando los mejores momentos...</h3></div>", unsafe_allow_html=True)
     
-    res = client.chat.completions.create(
-        model="gpt-4o-mini", messages=[{"role": "system", "content": prompt_completo}, {"role": "user", "content": res_w['text']}], response_format={"type": "json_object"}
-    )
-    clips = json.loads(res.choices[0].message.content).get("clips", [])
-    while len(clips) > 0 and len(clips) < cant: clips.append(clips[-1].copy())
+    # PROMPT ESTRICTO
+    prompt_completo = f"Actúa como un experto editor de TikTok. Tu tarea es extraer la mayor cantidad de clips posibles (máximo {cant}) del siguiente texto. OBLIGATORIO: cada clip debe durar entre {d_min} y {d_max} segundos. Títulos en ESPAÑOL, muy clickbait (máximo 5 palabras). Devuelve un JSON EXACTO con esta estructura: {{\"clips\": [{{\"inicio\": 10.5, \"fin\": 32.0, \"titulo\": \"TITULO\"}}]}}"
+    
+    try:
+        res = client.chat.completions.create(
+            model="gpt-4o-mini", messages=[{"role": "system", "content": prompt_completo}, {"role": "user", "content": res_w['text']}], response_format={"type": "json_object"}
+        )
+        clips = json.loads(res.choices[0].message.content).get("clips", [])
+    except Exception as e:
+        clips = []
+        
     return clips
 
 def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, col_bg, ass_fs, col_sub, out, mv, logo):
@@ -230,7 +207,8 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
     else: 
         f_base += "[m_base]null[m];"
 
-    estilo_srt = f"Encoding=UTF-8,FontSize={ass_fs},PrimaryColour={col_sub},OutlineColour=&H40000000&,BorderStyle=1,Outline={out},Alignment=2,MarginV={mv},Bold=1"
+    # COORDENADAS FIJAS PARA EVITAR EL CENTRO
+    estilo_srt = f"PlayResX=1080,PlayResY=1920,Encoding=UTF-8,FontSize={ass_fs},PrimaryColour={col_sub},OutlineColour=&H40000000&,BorderStyle=1,Outline={out},Alignment=2,MarginV={mv},Bold=1"
     f_txt = f"[m]drawtext=text=' {tit_safe} ':fontfile={font}:fontsize={tit_fs}:fontcolor={col_tit}:x=(w-text_w)/2:y=220:box=1:boxcolor={col_bg}@0.95:boxborderw=20:enable=between(t\\,0\\,5)[w_txt];[w_txt]subtitles=filename={srt}:force_style='{estilo_srt}'[f]"
     
     cmd.extend(["-filter_complex", f_base + f_txt, "-map", "[f]", "-map", "0:a", "-c:v", "libx264", "-c:a", "aac", "-movflags", "+faststart", out_vid])
@@ -238,7 +216,7 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
     return out_vid if os.path.exists(out_vid) else None
 
 # ==========================================
-# VISTA 1: LANDING PAGE (NO LOGUEADO)
+# INTERFAZ
 # ==========================================
 if not st.session_state.logged_in:
     col_logo, col_space, col_login = st.columns([2, 5, 1])
@@ -250,83 +228,12 @@ if not st.session_state.logged_in:
             st.rerun()
 
     if not st.session_state.show_auth:
-        st.markdown("""
-        <div style='text-align: center; margin-top: 20px;'>
-            <p class='hero-tag'>#1 AI VIDEO CLIPPING TOOL</p>
-            <h1 class='hero-title'>De 1 vídeo largo a 10 clips virales.<br>Automáticamente.</h1>
-            <p class='hero-subtitle'>Tyvidoo convierte tus vídeos y podcasts en Shorts listos para publicar, con la IA buscando los mejores momentos y añadiendo subtítulos estilo Hormozi.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown("<div style='text-align: center; margin-top: 20px;'><h1 class='hero-title'>De 1 vídeo largo a 10 clips virales.</h1></div>", unsafe_allow_html=True)
         col_pad1, col_center, col_pad2 = st.columns([1, 8, 1])
         with col_center:
-            st.markdown("<div style='background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.2); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 20px;'>", unsafe_allow_html=True)
-            st.markdown("<h3>Empieza a crear</h3>", unsafe_allow_html=True)
-            
-            tab1, tab2 = st.tabs(["🔴 Pegar enlace de YouTube", "📁 Subir Archivo Manual"])
-            with tab1: st.text_input("YouTube URL", placeholder="🔗 https://www.youtube.com/watch?v=...", label_visibility="collapsed")
-            with tab2: st.file_uploader("Subir Archivo", type=["mp4", "mov"], label_visibility="collapsed")
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-            
             if st.button("🚀 Iniciar Sesión y Generar Clips", type="primary", use_container_width=True):
                 st.session_state.show_auth = True
                 st.rerun()
-
-        m_1 = "<div class='marquee-wrapper'><div class='marquee-content'>"
-        m_2 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Uso el plan gratis comprimiendo mis podcasts. Es brutal\" - <b>@creador_es</b></div>"
-        m_3 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mis vistas en TikTok se multiplicaron x5\" - <b>@marketing_pro</b></div>"
-        m_4 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Subtítulos estilo Hormozi automáticos. Magia.\" - <b>@podcast_latam</b></div>"
-        m_5 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mucho más rápido que otras herramientas caras.\" - <b>@streamer_xd</b></div>"
-        m_6 = m_2 + m_3 + m_4 + m_5 + "</div></div>"
-        st.markdown(m_1 + m_2 + m_3 + m_4 + m_5 + m_6, unsafe_allow_html=True)
-
-        st.markdown("<div class='section-title'>Resultados de calidad profesional 🎬</div>", unsafe_allow_html=True)
-        c_vid1, c_vid2, c_vid3 = st.columns(3)
-        with c_vid1: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Hormozi 💛</h4></div>", unsafe_allow_html=True)
-        with c_vid2: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Podcast 🎙️</h4></div>", unsafe_allow_html=True)
-        with c_vid3: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Neón 👾</h4></div>", unsafe_allow_html=True)
-
-        st.markdown("<div class='section-title'>Planes simples y transparentes 💳</div>", unsafe_allow_html=True)
-        col_tog1, col_tog2, col_tog3 = st.columns([3, 2, 3])
-        with col_tog2:
-            st.markdown("<div style='margin-bottom: 40px; text-align: center;'>", unsafe_allow_html=True)
-            facturacion_anual = st.toggle("Facturación Anual (Ahorra 50%)", value=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-        precio_pro = "9" if facturacion_anual else "19"
-        precio_agencia = "24" if facturacion_anual else "49"
-        texto_mes = "/mes (cobrado anualmente)" if facturacion_anual else "/mes"
-
-        p_col1, p_col2, p_col3 = st.columns(3)
-        with p_col1:
-            st.markdown(f"""
-            <div class='pricing-card'>
-                <h3>Starter Gratuito</h3><div class='price'>$0<span>/mes</span></div>
-                <div class='pricing-features'>✔️ <b>30 créditos gratis</b><br>✔️ Exportación a 720p<br>✔️ Enlaces de YouTube<br>❌ Límite de subida</div>
-                <button style="width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white;">Empezar Gratis</button>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with p_col2:
-            st.markdown(f"""
-            <div class='pricing-card pro'>
-                <div class='badge'>MÁS POPULAR</div>
-                <h3>Creator Pro</h3><div class='price'>${precio_pro}<span>{texto_mes}</span></div>
-                <div class='pricing-features'>✔️ <b>200 minutos al mes</b><br>✔️ <b>Sin límite de tamaño</b><br>✔️ Exportación 1080p HD<br>✔️ Sin marca de agua</div>
-                <button style="width:100%; padding:15px; border-radius:10px; background:white; border:none; color:black; font-weight:bold;">Elegir Pro</button>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with p_col3:
-            st.markdown(f"""
-            <div class='pricing-card'>
-                <h3>Agencia</h3><div class='price'>${precio_agencia}<span>{texto_mes}</span></div>
-                <div class='pricing-features'>✔️ <b>1000 minutos al mes</b><br>✔️ Todos los beneficios Pro<br>✔️ Acceso a la API<br>✔️ Soporte prioritario 24/7</div>
-                <button style="width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white;">Contactar Ventas</button>
-            </div>
-            """, unsafe_allow_html=True)
-
     else:
         st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 800;'>Comienza a crear</h2></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -336,13 +243,10 @@ if not st.session_state.logged_in:
                 with st.form("reg_form"):
                     e_reg = st.text_input("Correo")
                     p_reg = st.text_input("Contraseña", type="password")
-                    if st.form_submit_button("Crear cuenta (30 créditos gratis)", type="primary", use_container_width=True):
-                        # AQUÍ ESTÁ LA MAGIA: Recibimos el éxito y el texto del error
-                        exito, mensaje_error = registrar_usuario(e_reg, p_reg)
-                        if exito: 
-                            st.success("✅ Creada. Inicia sesión.")
-                        else: 
-                            st.error(f"⚠️ Detalle del error: {mensaje_error}")
+                    if st.form_submit_button("Crear cuenta", type="primary", use_container_width=True):
+                        exito, msj = registrar_usuario(e_reg, p_reg)
+                        if exito: st.success("✅ Creada. Inicia sesión.")
+                        else: st.error(f"⚠️ Error: {msj}")
             with tab2:
                 with st.form("log_form"):
                     e_log = st.text_input("Correo")
@@ -358,18 +262,13 @@ if not st.session_state.logged_in:
                 st.session_state.show_auth = False
                 st.rerun()
 
-# ==========================================
-# VISTA 2: PANEL DE CONTROL (HÍBRIDO V2)
-# ==========================================
 else:
     creditos = obtener_creditos(st.session_state.user_email)
     
     with st.sidebar:
         st.markdown("<h2 style='font-weight:900;'>✂️ Tyvidoo</h2>", unsafe_allow_html=True)
         st.caption(st.session_state.user_email)
-        
         st.markdown(f"<div style='background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 15px; text-align: center; margin: 20px 0;'><h2 style='margin:0; font-weight: 800;'>{creditos} <span style='font-size: 14px; color: #888;'>créditos</span></h2></div>", unsafe_allow_html=True)
-        
         if st.button("🚪 Cerrar Sesión", use_container_width=True):
             st.session_state.logged_in = False; st.session_state.user_email = ""; st.rerun()
             
@@ -379,41 +278,31 @@ else:
         dur_clips = st.slider("Duración aprox. (seg)", 15, 90, (20, 45))
         plantilla = st.selectbox("Estilo Visual", ["Hormozi 💛", "Podcast 🎙️", "Neón 👾"])
         
-        if plantilla == "Hormozi 💛": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#FFFFFF", "#000000", "#FFFF00", 18, 2, 120, 45
-        elif plantilla == "Podcast 🎙️": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Arial", "#FFFFFF", "#333333", "#FFFFFF", 12, 1, 80, 35
-        else: f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#00FFFF", "#111111", "#FF00FF", 16, 2, 100, 45
+        # NUEVOS TAMAÑOS ADAPTADOS A FORMATO VERTICAL 1080x1920
+        if plantilla == "Hormozi 💛": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#FFFFFF", "#000000", "#FFFF00", 110, 4, 450, 80
+        elif plantilla == "Podcast 🎙️": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Arial", "#FFFFFF", "#333333", "#FFFFFF", 80, 3, 350, 60
+        else: f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#00FFFF", "#111111", "#FF00FF", 100, 4, 400, 80
         col_s_ass = hex_a_ass(c_s)
         
         st.divider()
         archivo_logo = st.file_uploader("Marca de Agua (PNG)", type=["png"])
 
-    st.markdown("""
-    <div class='dash-header'>
-        <div class='dash-title'>✂️ Espacio de Trabajo</div>
-        <div class='dash-sub'>Elige el origen de tu vídeo. Puedes pegar un enlace o subir un archivo directamente.</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div class='dash-header'><div class='dash-title'>✂️ Espacio de Trabajo</div></div>", unsafe_allow_html=True)
     
-    # SISTEMA HÍBRIDO (PESTAÑAS)
-    tab_yt, tab_upload = st.tabs(["🔴 Opción A: Enlace de YouTube", "📁 Opción B: Subir Archivo Manual"])
-    
+    tab_yt, tab_upload = st.tabs(["🔴 Opción A: Enlace YouTube", "📁 Opción B: Subir Archivo Manual"])
     with tab_yt:
-        st.write("Ideal para vídeos públicos que no tengan protección DRM de YouTube.")
-        url_video = st.text_input("", placeholder="🔗 https://www.youtube.com/watch?v=...", label_visibility="collapsed")
+        url_video = st.text_input("", placeholder="🔗 Enlace YouTube...", label_visibility="collapsed")
         btn_crear_yt = st.button("Procesar YouTube", type="primary")
-
     with tab_upload:
-        st.write("Ideal para archivos locales, podcasts pesados (previamente comprimidos) o vídeos privados.")
-        archivo_subido = st.file_uploader("📂 Selecciona tu vídeo (.mp4, .mov)", type=["mp4", "mov", "mkv"], label_visibility="collapsed")
+        archivo_subido = st.file_uploader("📂 Archivo", type=["mp4", "mov"], label_visibility="collapsed")
         btn_crear_up = st.button("Procesar Archivo", type="primary")
 
     espacio_animacion = st.empty()
 
-    # LÓGICA RENDERIZADO
     if btn_crear_yt or btn_crear_up:
-        if btn_crear_yt and not url_video: st.warning("⚠️ Pega un enlace de YouTube.")
-        elif btn_crear_up and not archivo_subido: st.warning("⚠️ Sube un archivo primero.")
-        elif creditos < cant_clips: st.error("❌ No tienes suficientes créditos.")
+        if btn_crear_yt and not url_video: st.warning("⚠️ Pega un enlace.")
+        elif btn_crear_up and not archivo_subido: st.warning("⚠️ Sube archivo.")
+        elif creditos < 1: st.error("❌ No tienes suficientes créditos.")
         else:
             st.session_state.mis_clips_data = []
             logo_path = "logo_tmp.png" if archivo_logo else None
@@ -421,31 +310,28 @@ else:
                 with open(logo_path, "wb") as f: f.write(archivo_logo.getbuffer())
             
             try:
-                if btn_crear_yt:
-                    lista = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
+                if btn_crear_yt: lista = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
                 else:
                     os.makedirs("archivos_brutos", exist_ok=True)
                     video_guardado_path = os.path.abspath("archivos_brutos/v.mp4")
-                    espacio_animacion.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>📥 Subiendo archivo...</h3></div>", unsafe_allow_html=True)
+                    espacio_animacion.markdown("<h3>📥 Subiendo...</h3>", unsafe_allow_html=True)
                     with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
                     lista = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
                 
+                # Cobramos solo los clips que se hayan podido generar realmente
+                clips_reales = len(lista)
                 for i, cl in enumerate(lista):
-                    espacio_animacion.markdown(f"<div class='loader-container'><div class='pulse-ring'></div><h3>✂️ Renderizando y subtitulando clip {i+1}/{len(lista)}</h3></div>", unsafe_allow_html=True)
+                    espacio_animacion.markdown(f"<h3>✂️ Renderizando clip {i+1}/{clips_reales}...</h3>", unsafe_allow_html=True)
                     r = renderizar_un_clip(i+1, cl["inicio"], cl["fin"], cl["titulo"], st.session_state.whisper_data, st.session_state.video_bruto_path, f"/System/Library/Fonts/Supplemental/{f_def}.ttf", tfs, c_t, c_b, afs, col_s_ass, aout, amv, logo_path)
                     if r: st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
                 
                 espacio_animacion.empty()
                 if st.session_state.mis_clips_data:
-                    gastar_creditos(st.session_state.user_email, cant_clips)
+                    gastar_creditos(st.session_state.user_email, clips_reales)
                     st.rerun()
             except Exception as e:
                 espacio_animacion.empty()
-                error_msg = str(e).lower()
-                if "drm" in error_msg or "403" in error_msg or "bot" in error_msg or "sign in" in error_msg:
-                    st.error("⚠️ YouTube ha protegido este vídeo contra descargas automáticas (Anti-Bot/DRM). Por favor, usa la pestaña 'Subir Archivo Manual' para procesarlo.")
-                else:
-                    st.error(f"Error procesando el vídeo: {e}")
+                st.error(f"Error procesando: {e}")
 
     if st.session_state.mis_clips_data:
         st.divider()
@@ -456,13 +342,6 @@ else:
                 st.markdown(f"<div class='glass-card'>", unsafe_allow_html=True)
                 st.video(clip["ruta"])
                 st.markdown(f"<b style='display:block; margin: 10px 0;'>{clip['titulo']}</b>", unsafe_allow_html=True)
-                
                 with open(clip["ruta"], "rb") as f: 
-                    st.download_button(
-                        label="⬇️ Descargar HD", 
-                        data=f, 
-                        file_name=f"Clip_{clip['id']}.mp4", 
-                        mime="video/mp4", 
-                        use_container_width=True
-                    )
+                    st.download_button(label="⬇️ Descargar HD", data=f, file_name=f"Clip_{clip['id']}.mp4", mime="video/mp4", use_container_width=True)
                 st.markdown("</div>", unsafe_allow_html=True)
