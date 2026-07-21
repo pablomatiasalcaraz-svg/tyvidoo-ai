@@ -52,7 +52,6 @@ st.markdown("""
     .glass-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; text-align: center; transition: all 0.3s ease; }
     .glass-card:hover { transform: translateY(-5px); border: 1px solid rgba(255,255,255,0.2); }
 
-    /* Fix para los botones principales y de descarga */
     .stButton>button[kind="primary"] { background-color: #ffffff !important; color: #000000 !important; font-weight: 800 !important; border-radius: 12px !important; border: none !important; font-size: 16px !important; padding: 10px 30px !important; width: 100% !important; margin-top: 5px; }
     .stButton>button[kind="primary"]:hover { transform: translateY(-2px); background-color: #eeeeee !important; }
     .stDownloadButton>button { background-color: #222222 !important; color: #ffffff !important; font-weight: 600 !important; border-radius: 8px !important; border: 1px solid #444 !important; }
@@ -256,10 +255,9 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
     return out_vid if os.path.exists(out_vid) else None
 
 # ==========================================
-# VISTA 1: LANDING PAGE
+# VISTA 1: LANDING PAGE PERFECTA Y COMPLETA
 # ==========================================
 if not st.session_state.logged_in:
-    # [SE MANTIENE IGUAL TU LANDING PAGE PERFECTA]
     col_logo, col_space, col_login = st.columns([2, 5, 1])
     with col_logo: st.markdown("<div class='top-nav'><div class='nav-logo'>✂️ Tyvidoo AI</div></div>", unsafe_allow_html=True)
     with col_login:
@@ -269,12 +267,83 @@ if not st.session_state.logged_in:
             st.rerun()
 
     if not st.session_state.show_auth:
-        st.markdown("<div style='text-align: center; margin-top: 20px;'><p class='hero-tag'>#1 AI VIDEO CLIPPING TOOL</p><h1 class='hero-title'>De 1 vídeo largo a 10 clips virales.<br>Automáticamente.</h1></div>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style='text-align: center; margin-top: 20px;'>
+            <p class='hero-tag'>#1 AI VIDEO CLIPPING TOOL</p>
+            <h1 class='hero-title'>De 1 vídeo largo a 10 clips virales.<br>Automáticamente.</h1>
+            <p class='hero-subtitle'>Tyvidoo convierte tus vídeos y podcasts en Shorts listos para publicar, con la IA buscando los mejores momentos y añadiendo subtítulos estilo Hormozi.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
         col_pad1, col_center, col_pad2 = st.columns([1, 8, 1])
         with col_center:
+            st.markdown("<div style='background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.2); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 20px;'>", unsafe_allow_html=True)
+            st.markdown("<h3>Empieza a crear</h3>", unsafe_allow_html=True)
+            
+            tab1, tab2 = st.tabs(["🔴 Pegar enlace de YouTube", "📁 Subir Archivo Manual"])
+            with tab1: st.text_input("YouTube URL", placeholder="🔗 https://www.youtube.com/watch?v=...", label_visibility="collapsed")
+            with tab2: st.file_uploader("Subir Archivo", type=["mp4", "mov"], label_visibility="collapsed")
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+            
             if st.button("🚀 Iniciar Sesión y Generar Clips", type="primary", use_container_width=True):
                 st.session_state.show_auth = True
                 st.rerun()
+
+        m_1 = "<div class='marquee-wrapper'><div class='marquee-content'>"
+        m_2 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Uso el plan gratis comprimiendo mis podcasts. Es brutal\" - <b>@creador_es</b></div>"
+        m_3 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mis vistas en TikTok se multiplicaron x5\" - <b>@marketing_pro</b></div>"
+        m_4 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Subtítulos estilo Hormozi automáticos. Magia.\" - <b>@podcast_latam</b></div>"
+        m_5 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mucho más rápido que otras herramientas caras.\" - <b>@streamer_xd</b></div>"
+        m_6 = m_2 + m_3 + m_4 + m_5 + "</div></div>"
+        st.markdown(m_1 + m_2 + m_3 + m_4 + m_5 + m_6, unsafe_allow_html=True)
+
+        st.markdown("<div class='section-title'>Resultados de calidad profesional 🎬</div>", unsafe_allow_html=True)
+        c_vid1, c_vid2, c_vid3 = st.columns(3)
+        with c_vid1: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Hormozi 💛</h4></div>", unsafe_allow_html=True)
+        with c_vid2: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Podcast 🎙️</h4></div>", unsafe_allow_html=True)
+        with c_vid3: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Neón 👾</h4></div>", unsafe_allow_html=True)
+
+        st.markdown("<div class='section-title'>Planes simples y transparentes 💳</div>", unsafe_allow_html=True)
+        col_tog1, col_tog2, col_tog3 = st.columns([3, 2, 3])
+        with col_tog2:
+            st.markdown("<div style='margin-bottom: 40px; text-align: center;'>", unsafe_allow_html=True)
+            facturacion_anual = st.toggle("Facturación Anual (Ahorra 50%)", value=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+        precio_pro = "9" if facturacion_anual else "19"
+        precio_agencia = "24" if facturacion_anual else "49"
+        texto_mes = "/mes (cobrado anualmente)" if facturacion_anual else "/mes"
+
+        p_col1, p_col2, p_col3 = st.columns(3)
+        with p_col1:
+            st.markdown(f"""
+            <div class='pricing-card'>
+                <h3>Starter Gratuito</h3><div class='price'>$0<span>/mes</span></div>
+                <div class='pricing-features'>✔️ <b>30 créditos gratis</b><br>✔️ Exportación a 720p<br>✔️ Enlaces de YouTube<br>❌ Límite de subida</div>
+                <button style="width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white;">Empezar Gratis</button>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with p_col2:
+            st.markdown(f"""
+            <div class='pricing-card pro'>
+                <div class='badge'>MÁS POPULAR</div>
+                <h3>Creator Pro</h3><div class='price'>${precio_pro}<span>{texto_mes}</span></div>
+                <div class='pricing-features'>✔️ <b>200 minutos al mes</b><br>✔️ <b>Sin límite de tamaño</b><br>✔️ Exportación 1080p HD<br>✔️ Sin marca de agua</div>
+                <button style="width:100%; padding:15px; border-radius:10px; background:white; border:none; color:black; font-weight:bold;">Elegir Pro</button>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with p_col3:
+            st.markdown(f"""
+            <div class='pricing-card'>
+                <h3>Agencia</h3><div class='price'>${precio_agencia}<span>{texto_mes}</span></div>
+                <div class='pricing-features'>✔️ <b>1000 minutos al mes</b><br>✔️ Todos los beneficios Pro<br>✔️ Acceso a la API<br>✔️ Soporte prioritario 24/7</div>
+                <button style="width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white;">Contactar Ventas</button>
+            </div>
+            """, unsafe_allow_html=True)
+
     else:
         st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 800;'>Comienza a crear</h2></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -320,13 +389,38 @@ else:
         dur_clips = st.slider("Duración aprox. (seg)", 15, 90, (20, 45))
         
         st.divider()
-        st.markdown("<b>🎨 Previsualización de Estilos</b>", unsafe_allow_html=True)
-        # Imágenes de muestra para que el usuario sepa qué elige
+        st.markdown("<b>🎨 Previsualización de Estructura</b>", unsafe_allow_html=True)
+        
+        # MOCKUPS REALISTAS ESTRUCTURALES (SIMULANDO EL VÍDEO FINAL)
         st.markdown("""
-        <div style='display: flex; gap: 10px; margin-bottom:10px;'>
-            <div style='flex:1; text-align:center;'><img src='https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=350&q=80' style='width:100%; border-radius:8px;'><br><small>Hormozi 💛</small></div>
-            <div style='flex:1; text-align:center;'><img src='https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=350&q=80' style='width:100%; border-radius:8px;'><br><small>Podcast 🎙️</small></div>
-            <div style='flex:1; text-align:center;'><img src='https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=350&q=80' style='width:100%; border-radius:8px;'><br><small>Neón 👾</small></div>
+        <div style='display: flex; gap: 10px; margin-bottom:15px;'>
+            <!-- Estilo Hormozi -->
+            <div style='flex:1; text-align:center;'>
+                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #222, #444, #222); position: relative; border-radius: 8px; overflow: hidden; border: 2px solid #555;'>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: black; color: white; font-family: Impact, sans-serif; font-size: 9px; padding: 2px 6px; text-transform: uppercase;'>TÍTULO VIRAL</span></div>
+                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1557804506-669a67965ba0?w=150&q=80) center/cover;'></div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: yellow; font-family: Impact, sans-serif; font-size: 14px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>TEXTO CLAVE</div>
+                </div>
+                <small style='display:block; margin-top:5px; color:#aaa;'>Hormozi 💛</small>
+            </div>
+            <!-- Estilo Podcast -->
+            <div style='flex:1; text-align:center;'>
+                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #111, #333, #111); position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #444;'>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #333; color: white; font-family: Arial, sans-serif; font-size: 8px; padding: 3px 6px;'>EL TEMA DEL DÍA</span></div>
+                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?w=150&q=80) center/cover;'></div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: white; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; text-shadow: 1px 1px 2px #000;'>Podcast clásico</div>
+                </div>
+                <small style='display:block; margin-top:5px; color:#aaa;'>Podcast 🎙️</small>
+            </div>
+            <!-- Estilo Neón -->
+            <div style='flex:1; text-align:center;'>
+                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #001, #003, #001); position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #0ff;'>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #111; color: #0ff; font-family: Impact, sans-serif; font-size: 9px; padding: 2px 6px; text-transform: uppercase;'>MOMENTO ÉPICO</span></div>
+                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150&q=80) center/cover;'></div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: #f0f; font-family: Impact, sans-serif; font-size: 14px; text-shadow: 0 0 5px #f0f;'>GAMING</div>
+                </div>
+                <small style='display:block; margin-top:5px; color:#aaa;'>Neón 👾</small>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -376,7 +470,6 @@ else:
         clips_a_renderizar = []
         for i, clip in enumerate(st.session_state.clips_propuestos):
             duracion = round(clip["fin"] - clip["inicio"], 1)
-            # Creamos una cajita visual para cada clip
             st.markdown(f"<div class='clip-preview-container'><b>🎬 {clip['titulo']}</b><br><span style='color:#aaa;'>De {clip['inicio']}s a {clip['fin']}s (Dura {duracion}s)</span></div>", unsafe_allow_html=True)
             if st.checkbox(f"Generar este clip", value=True, key=f"chk_{i}"):
                 clips_a_renderizar.append(clip)
@@ -397,7 +490,7 @@ else:
                 
                 espacio_animacion.empty()
                 gastar_creditos(st.session_state.user_email, len(clips_a_renderizar))
-                st.session_state.clips_propuestos = [] # Limpiamos la propuesta
+                st.session_state.clips_propuestos = []
                 st.rerun()
                 
         if st.button("Cancelar y subir otro vídeo"):
