@@ -97,8 +97,10 @@ def registrar_usuario(email, password):
         password_bytes = password.strip()[:72].encode('utf-8')
         hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode('utf-8')
         supabase.table("usuarios").insert({"email": email, "password_hash": hashed_password, "creditos": 30}).execute()
-        return True
-    except: return False
+        return True, ""
+    except Exception as e: 
+        print(f"ERROR DE SUPABASE: {e}")
+        return False, str(e)  # Devolvemos el error exacto para mostrarlo en pantalla
 
 def login_usuario(email, password):
     email = email.lower().strip()
@@ -335,8 +337,12 @@ if not st.session_state.logged_in:
                     e_reg = st.text_input("Correo")
                     p_reg = st.text_input("Contraseña", type="password")
                     if st.form_submit_button("Crear cuenta (30 créditos gratis)", type="primary", use_container_width=True):
-                        if registrar_usuario(e_reg, p_reg): st.success("✅ Creada. Inicia sesión.")
-                        else: st.error("⚠️ Error al crear.")
+                        # AQUÍ ESTÁ LA MAGIA: Recibimos el éxito y el texto del error
+                        exito, mensaje_error = registrar_usuario(e_reg, p_reg)
+                        if exito: 
+                            st.success("✅ Creada. Inicia sesión.")
+                        else: 
+                            st.error(f"⚠️ Detalle del error: {mensaje_error}")
             with tab2:
                 with st.form("log_form"):
                     e_log = st.text_input("Correo")
