@@ -54,6 +54,7 @@ st.markdown("""
 
     .stButton>button[kind="primary"] { background-color: #ffffff !important; color: #000000 !important; font-weight: 800 !important; border-radius: 12px !important; border: none !important; font-size: 16px !important; padding: 10px 30px !important; width: 100% !important; margin-top: 5px; }
     .stButton>button[kind="primary"]:hover { transform: translateY(-2px); background-color: #eeeeee !important; }
+    .stButton>button[kind="secondary"] { background-color: transparent !important; color: #fff !important; border: none !important; padding: 0 !important; margin-top: 5px; }
     .stDownloadButton>button { background-color: #222222 !important; color: #ffffff !important; font-weight: 600 !important; border-radius: 8px !important; border: 1px solid #444 !important; }
     .stDownloadButton>button:hover { background-color: #333333 !important; border: 1px solid #666 !important;}
     
@@ -88,7 +89,7 @@ st.markdown("""
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 if "user_email" not in st.session_state: st.session_state.user_email = ""
 if "mis_clips_data" not in st.session_state: st.session_state.mis_clips_data = [] 
-if "clips_propuestos" not in st.session_state: st.session_state.clips_propuestos = []
+if "plantilla" not in st.session_state: st.session_state.plantilla = "Hormozi 💛"
 if "whisper_data" not in st.session_state: st.session_state.whisper_data = None
 if "video_bruto_path" not in st.session_state: st.session_state.video_bruto_path = None
 if "duracion_max_video" not in st.session_state: st.session_state.duracion_max_video = 100.0
@@ -213,11 +214,12 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
 
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎯 Encontrando los momentos más virales...</h3></div>", unsafe_allow_html=True)
     
-    prompt_completo = f"""Actúa como un experto editor de TikTok. Extrae hasta {cant} clips virales del texto. 
+    # PROMPT ESTRICTO FORZANDO LA CANTIDAD EXACTA
+    prompt_completo = f"""Actúa como un experto editor de TikTok. Tu misión es extraer EXACTAMENTE {cant} clips virales del texto. 
     REGLAS ESTRICTAS:
-    1. Cada clip debe durar entre {d_min} y {d_max} segundos.
-    2. NO hagas todos los clips de la misma duración. Busca cortes naturales.
-    3. NO solapes los tiempos. Cada clip debe ser distinto.
+    1. TIENES que devolver exactamente {cant} clips. Ni uno más, ni uno menos. Si el vídeo es corto, permite ligeros solapamientos, pero cumple el número.
+    2. Cada clip debe durar entre {d_min} y {d_max} segundos.
+    3. Busca cortes naturales con sentido.
     4. Títulos en ESPAÑOL, muy clickbait (máximo 5 palabras). 
     Devuelve un JSON EXACTO: {{"clips": [{{"inicio": 10.5, "fin": 42.1, "titulo": "TITULO"}}]}}"""
     
@@ -255,7 +257,7 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
     return out_vid if os.path.exists(out_vid) else None
 
 # ==========================================
-# VISTA 1: LANDING PAGE PERFECTA Y COMPLETA
+# VISTA 1: LANDING PAGE PERFECTA
 # ==========================================
 if not st.session_state.logged_in:
     col_logo, col_space, col_login = st.columns([2, 5, 1])
@@ -373,7 +375,7 @@ if not st.session_state.logged_in:
                 st.rerun()
 
 # ==========================================
-# VISTA 2: PANEL DE CONTROL
+# VISTA 2: PANEL DE CONTROL AUTOMÁTICO
 # ==========================================
 else:
     creditos = obtener_creditos(st.session_state.user_email)
@@ -389,47 +391,53 @@ else:
         dur_clips = st.slider("Duración aprox. (seg)", 15, 90, (20, 45))
         
         st.divider()
-        st.markdown("<b>🎨 Previsualización de Estructura</b>", unsafe_allow_html=True)
+        st.markdown("<b>🎨 Elige tu Diseño Final</b>", unsafe_allow_html=True)
         
-        # MOCKUPS REALISTAS ESTRUCTURALES (SIMULANDO EL VÍDEO FINAL)
-        st.markdown("""
-        <div style='display: flex; gap: 10px; margin-bottom:15px;'>
-            <!-- Estilo Hormozi -->
-            <div style='flex:1; text-align:center;'>
-                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #222, #444, #222); position: relative; border-radius: 8px; overflow: hidden; border: 2px solid #555;'>
-                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: black; color: white; font-family: Impact, sans-serif; font-size: 9px; padding: 2px 6px; text-transform: uppercase;'>TÍTULO VIRAL</span></div>
-                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1557804506-669a67965ba0?w=150&q=80) center/cover;'></div>
-                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: yellow; font-family: Impact, sans-serif; font-size: 14px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>TEXTO CLAVE</div>
-                </div>
-                <small style='display:block; margin-top:5px; color:#aaa;'>Hormozi 💛</small>
-            </div>
-            <!-- Estilo Podcast -->
-            <div style='flex:1; text-align:center;'>
-                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #111, #333, #111); position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #444;'>
-                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #333; color: white; font-family: Arial, sans-serif; font-size: 8px; padding: 3px 6px;'>EL TEMA DEL DÍA</span></div>
-                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?w=150&q=80) center/cover;'></div>
-                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: white; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; text-shadow: 1px 1px 2px #000;'>Podcast clásico</div>
-                </div>
-                <small style='display:block; margin-top:5px; color:#aaa;'>Podcast 🎙️</small>
-            </div>
-            <!-- Estilo Neón -->
-            <div style='flex:1; text-align:center;'>
-                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #001, #003, #001); position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #0ff;'>
-                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #111; color: #0ff; font-family: Impact, sans-serif; font-size: 9px; padding: 2px 6px; text-transform: uppercase;'>MOMENTO ÉPICO</span></div>
-                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150&q=80) center/cover;'></div>
-                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: #f0f; font-family: Impact, sans-serif; font-size: 14px; text-shadow: 0 0 5px #f0f;'>GAMING</div>
-                </div>
-                <small style='display:block; margin-top:5px; color:#aaa;'>Neón 👾</small>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        # SELECTOR VISUAL INTERACTIVO CON BOTONES
+        col_p1, col_p2, col_p3 = st.columns(3)
+        b1 = "2px solid #fff" if st.session_state.plantilla == "Hormozi 💛" else "1px solid #333"
+        b2 = "2px solid #fff" if st.session_state.plantilla == "Podcast 🎙️" else "1px solid #333"
+        b3 = "2px solid #fff" if st.session_state.plantilla == "Neón 👾" else "1px solid #333"
         
-        plantilla = st.selectbox("Elige tu diseño final", ["Hormozi 💛", "Podcast 🎙️", "Neón 👾"])
+        with col_p1:
+            st.markdown(f"""<div style='border: {b1}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05); cursor:pointer;'>
+                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #222, #444, #222); position: relative; border-radius: 6px; overflow: hidden;'>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: black; color: white; font-family: Impact, sans-serif; font-size: 7px; padding: 2px 4px; text-transform: uppercase;'>TÍTULO VIRAL</span></div>
+                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1557804506-669a67965ba0?w=100&q=80) center/cover;'></div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: yellow; font-family: Impact, sans-serif; font-size: 10px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>TEXTO CLAVE</div>
+                </div>
+            </div>""", unsafe_allow_html=True)
+            if st.button("💛 Hormozi", use_container_width=True): st.session_state.plantilla = "Hormozi 💛"; st.rerun()
+
+        with col_p2:
+            st.markdown(f"""<div style='border: {b2}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
+                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #111, #333, #111); position: relative; border-radius: 6px; overflow: hidden;'>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #333; color: white; font-family: Arial, sans-serif; font-size: 7px; padding: 2px 4px;'>EL TEMA</span></div>
+                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?w=100&q=80) center/cover;'></div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: white; font-family: Arial, sans-serif; font-size: 9px; font-weight: bold; text-shadow: 1px 1px 2px #000;'>Podcast</div>
+                </div>
+            </div>""", unsafe_allow_html=True)
+            if st.button("🎙️ Podcast", use_container_width=True): st.session_state.plantilla = "Podcast 🎙️"; st.rerun()
+
+        with col_p3:
+            st.markdown(f"""<div style='border: {b3}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
+                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #001, #003, #001); position: relative; border-radius: 6px; overflow: hidden;'>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #111; color: #0ff; font-family: Impact, sans-serif; font-size: 7px; padding: 2px 4px; text-transform: uppercase;'>MOMENTO</span></div>
+                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&q=80) center/cover;'></div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: #f0f; font-family: Impact, sans-serif; font-size: 10px; text-shadow: 0 0 5px #f0f;'>GAMING</div>
+                </div>
+            </div>""", unsafe_allow_html=True)
+            if st.button("👾 Neón", use_container_width=True): st.session_state.plantilla = "Neón 👾"; st.rerun()
+            
+        plantilla = st.session_state.plantilla
+        
+        # Configurar variables de diseño según la selección visual
         if plantilla == "Hormozi 💛": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#FFFFFF", "#000000", "#FFFF00", 110, 4, 450, 80
         elif plantilla == "Podcast 🎙️": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Arial", "#FFFFFF", "#333333", "#FFFFFF", 80, 3, 350, 60
         else: f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#00FFFF", "#111111", "#FF00FF", 100, 4, 400, 80
         col_s_ass = hex_a_ass(c_s)
         
+        st.divider()
         archivo_logo = st.file_uploader("Marca de Agua (PNG)", type=["png"])
         
         st.divider()
@@ -441,63 +449,56 @@ else:
     st.markdown("<div class='dash-header'><div class='dash-title'>✂️ Espacio de Trabajo</div></div>", unsafe_allow_html=True)
     espacio_animacion = st.empty()
 
-    # --- FASE 1: BUSCAR CLIPS (Gratis) ---
-    if not st.session_state.clips_propuestos and not st.session_state.mis_clips_data:
+    if not st.session_state.mis_clips_data:
         tab_yt, tab_upload = st.tabs(["🔴 Enlace YouTube", "📁 Archivo Manual"])
         with tab_yt:
             url_video = st.text_input("", placeholder="🔗 Pega tu enlace aquí...", label_visibility="collapsed")
-            if st.button("🔍 Buscar Mejores Momentos", type="primary"):
-                if url_video:
-                    st.session_state.clips_propuestos = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
-                    st.rerun()
-                else: st.warning("⚠️ Pega un enlace.")
+            btn_crear_yt = st.button("🚀 Procesar YouTube y Crear Clips", type="primary")
         with tab_upload:
             archivo_subido = st.file_uploader("📂 Archivo", type=["mp4", "mov"], label_visibility="collapsed")
-            if st.button("🔍 Buscar Mejores Momentos (Archivo)", type="primary"):
-                if archivo_subido:
-                    os.makedirs("archivos_brutos", exist_ok=True)
-                    vp = os.path.abspath("archivos_brutos/v.mp4")
-                    with open(vp, "wb") as f: f.write(archivo_subido.getbuffer())
-                    st.session_state.clips_propuestos = procesar_video_local(vp, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
-                    st.rerun()
-                else: st.warning("⚠️ Sube archivo.")
+            btn_crear_up = st.button("🚀 Procesar Archivo y Crear Clips", type="primary")
 
-    # --- FASE 2: SELECCIONAR Y RENDERIZAR (Cuesta Créditos) ---
-    elif st.session_state.clips_propuestos and not st.session_state.mis_clips_data:
-        st.markdown("<h3>🎯 La IA ha encontrado estos momentos:</h3>", unsafe_allow_html=True)
-        st.write("Selecciona los clips que quieres convertir a vídeo. (Costo: 1 crédito por clip renderizado).")
-        
-        clips_a_renderizar = []
-        for i, clip in enumerate(st.session_state.clips_propuestos):
-            duracion = round(clip["fin"] - clip["inicio"], 1)
-            st.markdown(f"<div class='clip-preview-container'><b>🎬 {clip['titulo']}</b><br><span style='color:#aaa;'>De {clip['inicio']}s a {clip['fin']}s (Dura {duracion}s)</span></div>", unsafe_allow_html=True)
-            if st.checkbox(f"Generar este clip", value=True, key=f"chk_{i}"):
-                clips_a_renderizar.append(clip)
-        
-        st.divider()
-        if st.button(f"✂️ Renderizar Seleccionados ({len(clips_a_renderizar)} créditos)", type="primary"):
-            if creditos < len(clips_a_renderizar):
-                st.error("❌ No tienes suficientes créditos.")
+        if btn_crear_yt or btn_crear_up:
+            if btn_crear_yt and not url_video: st.warning("⚠️ Pega un enlace.")
+            elif btn_crear_up and not archivo_subido: st.warning("⚠️ Sube archivo.")
+            elif creditos < 1: st.error("❌ No tienes suficientes créditos para iniciar.")
             else:
+                st.session_state.mis_clips_data = []
                 logo_path = "logo_tmp.png" if archivo_logo else None
                 if logo_path:
                     with open(logo_path, "wb") as f: f.write(archivo_logo.getbuffer())
                 
-                for i, cl in enumerate(clips_a_renderizar):
-                    espacio_animacion.markdown(f"<h3>✂️ Renderizando clip {i+1}/{len(clips_a_renderizar)}...</h3>", unsafe_allow_html=True)
-                    r = renderizar_un_clip(i+1, cl["inicio"], cl["fin"], cl["titulo"], st.session_state.whisper_data, st.session_state.video_bruto_path, f"/System/Library/Fonts/Supplemental/{f_def}.ttf", tfs, c_t, c_b, afs, col_s_ass, aout, amv, logo_path)
-                    if r: st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
-                
-                espacio_animacion.empty()
-                gastar_creditos(st.session_state.user_email, len(clips_a_renderizar))
-                st.session_state.clips_propuestos = []
-                st.rerun()
-                
-        if st.button("Cancelar y subir otro vídeo"):
-            st.session_state.clips_propuestos = []
-            st.rerun()
+                try:
+                    if btn_crear_yt: 
+                        clips_a_renderizar = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
+                    else:
+                        os.makedirs("archivos_brutos", exist_ok=True)
+                        video_guardado_path = os.path.abspath("archivos_brutos/v.mp4")
+                        espacio_animacion.markdown("<h3>📥 Subiendo...</h3>", unsafe_allow_html=True)
+                        with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
+                        clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
+                    
+                    if len(clips_a_renderizar) > creditos:
+                        st.warning(f"⚠️ Has pedido más clips de los créditos que tienes. Solo se generarán los primeros {creditos}.")
+                        clips_a_renderizar = clips_a_renderizar[:creditos]
 
-    # --- FASE 3: RESULTADOS ---
+                    if len(clips_a_renderizar) > 0:
+                        for i, cl in enumerate(clips_a_renderizar):
+                            espacio_animacion.markdown(f"<h3>✂️ Renderizando clip {i+1}/{len(clips_a_renderizar)}...</h3>", unsafe_allow_html=True)
+                            r = renderizar_un_clip(i+1, cl["inicio"], cl["fin"], cl["titulo"], st.session_state.whisper_data, st.session_state.video_bruto_path, f"/System/Library/Fonts/Supplemental/{f_def}.ttf", tfs, c_t, c_b, afs, col_s_ass, aout, amv, logo_path)
+                            if r: st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
+                        
+                        espacio_animacion.empty()
+                        gastar_creditos(st.session_state.user_email, len(clips_a_renderizar))
+                        st.rerun()
+                    else:
+                        espacio_animacion.empty()
+                        st.error("⚠️ La IA no pudo encontrar clips que encajen en esos tiempos. Prueba ampliando la duración.")
+
+                except Exception as e:
+                    espacio_animacion.empty()
+                    st.error(f"Error procesando: {e}")
+
     elif st.session_state.mis_clips_data:
         st.success("✅ ¡Tus clips están listos!")
         
