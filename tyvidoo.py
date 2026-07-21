@@ -213,8 +213,14 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
 
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎯 Buscando los mejores momentos...</h3></div>", unsafe_allow_html=True)
     
-    # PROMPT ESTRICTO
-    prompt_completo = f"Actúa como un experto editor de TikTok. Tu tarea es extraer la mayor cantidad de clips posibles (máximo {cant}) del siguiente texto. OBLIGATORIO: cada clip debe durar entre {d_min} y {d_max} segundos. Títulos en ESPAÑOL, muy clickbait (máximo 5 palabras). Devuelve un JSON EXACTO con esta estructura: {{\"clips\": [{{\"inicio\": 10.5, \"fin\": 32.0, \"titulo\": \"TITULO\"}}]}}"
+    # PROMPT ANTIPEREZA Y ANTI-SOLAPAMIENTOS
+    prompt_completo = f"""Actúa como un experto editor de TikTok. Extrae hasta {cant} clips virales del texto. 
+    REGLAS ESTRICTAS:
+    1. Cada clip debe durar entre {d_min} y {d_max} segundos.
+    2. NO hagas todos los clips de la misma duración. Busca cortes naturales donde termine una frase o idea.
+    3. NO solapes los tiempos. Cada clip debe ser de un momento distinto del vídeo.
+    4. Títulos en ESPAÑOL, muy clickbait (máximo 5 palabras). 
+    Devuelve un JSON EXACTO: {{"clips": [{{"inicio": 10.5, "fin": 42.1, "titulo": "TITULO"}}]}}"""
     
     try:
         res = client.chat.completions.create(
@@ -450,7 +456,30 @@ else:
 
     if st.session_state.mis_clips_data:
         st.divider()
-        st.markdown("<h3 style='margin-bottom: 20px;'>Tus clips generados</h3>", unsafe_allow_html=True)
+        
+        # --- CABECERA CON BOTÓN DE DESCARGA GLOBAL ---
+        col_tit, col_btn = st.columns([3, 1])
+        with col_tit:
+            st.markdown("<h3 style='margin-bottom: 20px;'>Tus clips generados</h3>", unsafe_allow_html=True)
+        with col_btn:
+            # Empaquetar todo en un ZIP al vuelo
+            zip_path = "archivos_brutos/todos_los_clips.zip"
+            with zipfile.ZipFile(zip_path, 'w') as zipf:
+                for clip in st.session_state.mis_clips_data:
+                    nombre_limpio = re.sub(r'[^\w\s-]', '', clip["titulo"]).strip().replace(" ", "_")
+                    zipf.write(clip["ruta"], f"Clip_{clip['id']}_{nombre_limpio}.mp4")
+            
+            with open(zip_path, "rb") as f: 
+                st.download_button(
+                    label="📦 Descargar TODOS (.zip)", 
+                    data=f, 
+                    file_name="Tyvidoo_Clips.zip", 
+                    mime="application/zip", 
+                    use_container_width=True,
+                    type="primary"
+                )
+
+        # --- GALERÍA INDIVIDUAL ---
         cols = st.columns(3)
         for i, clip in enumerate(st.session_state.mis_clips_data):
             with cols[i % 3]:
@@ -458,5 +487,12 @@ else:
                 st.video(clip["ruta"])
                 st.markdown(f"<b style='display:block; margin: 10px 0;'>{clip['titulo']}</b>", unsafe_allow_html=True)
                 with open(clip["ruta"], "rb") as f: 
-                    st.download_button(label="⬇️ Descargar HD", data=f, file_name=f"Clip_{clip['id']}.mp4", mime="video/mp4", use_container_width=True)
+                    st.download_button(
+                        label="⬇️ Descargar HD", 
+                        data=f, 
+                        file_name=f"Clip_{clip['id']}.mp4", 
+                        mime="video/mp4", 
+                        use_container_width=True,
+                        key=f"dl_btn_{clip['id']}" # Añadimos key única por seguridad
+                    )
                 st.markdown("</div>", unsafe_allow_html=True)
