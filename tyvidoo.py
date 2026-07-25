@@ -225,14 +225,11 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
             txt = " ".join([p['word'] for p in chunk])
             transcript_con_tiempos += f"[{ini:.1f}s - {fin:.1f}s] {txt}\n"
     
-    # NUEVO PROMPT SUPER ESTRICTO CON LAS MATEMÁTICAS DEL TIEMPO
-    prompt_completo = f"""Actúa como un experto editor de TikTok. Extrae EXACTAMENTE {cant} clips virales.
+    prompt_completo = f"""Actúa como un experto editor de TikTok. Extrae {cant} clips virales.
     Te paso el texto del vídeo etiquetado con las marcas de tiempo [inicio - fin].
-    REGLAS ESTRICTAS E INQUEBRANTABLES:
-    1. Tienes que devolver exactamente {cant} clips.
-    2. LA DURACIÓN ES SAGRADA: Cada clip DEBE durar entre {d_min} y {d_max} segundos. Tienes que SUMAR varios bloques de texto consecutivos para alcanzar ese tiempo. Asegúrate matemáticamente de que el 'fin' menos el 'inicio' de cada clip sea mayor que {d_min}. ¡Prohibido hacer clips de 4 o 10 segundos!
-    3. Busca cortes naturales con sentido agrupando todo lo necesario.
-    4. Títulos en ESPAÑOL, muy clickbait (máximo 5 palabras). 
+    REGLAS ESTRICTAS:
+    1. Devuelve clips interesantes.
+    2. Títulos en ESPAÑOL, MUY CORTOS (MÁXIMO 4 PALABRAS).
     Devuelve un JSON EXACTO: {{"clips": [{{"inicio": 10.5, "fin": 42.1, "titulo": "TITULO"}}]}}"""
     
     try:
@@ -243,7 +240,40 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
     except Exception:
         clips = []
         
-    return clips
+    # --- RED DE SEGURIDAD PYTHON (CERO ERRORES DE LA IA) ---
+    clips_finales = []
+    for c in clips:
+        ini = float(c.get("inicio", 0))
+        fin = float(c.get("fin", ini + d_min))
+        tit = str(c.get("titulo", "MOMENTO VIRAL"))
+        
+        # 1. Forzar tiempos matemáticamente (Anti-pereza)
+        if (fin - ini) < d_min: fin = ini + d_min
+        if (fin - ini) > d_max: fin = ini + d_max
+        if fin > st.session_state.duracion_max_video: 
+            fin = st.session_state.duracion_max_video
+            ini = max(0, fin - d_min)
+            
+        # 2. Forzar títulos cortos (Anti-salidas de pantalla)
+        palabras_tit = tit.split()
+        if len(palabras_tit) > 4: 
+            tit = " ".join(palabras_tit[:4])
+            
+        clips_finales.append({"inicio": round(ini, 1), "fin": round(fin, 1), "titulo": tit.upper()})
+
+    # 3. Forzar cantidad exacta (Si la IA se rinde, rellenamos nosotros)
+    while len(clips_finales) < cant:
+        ultimo_fin = clips_finales[-1]["fin"] if clips_finales else 0
+        nuevo_ini = ultimo_fin + 5 # Empezamos 5 segundos después del último
+        nuevo_fin = nuevo_ini + d_min
+        if nuevo_fin > st.session_state.duracion_max_video:
+            nuevo_ini = max(0, st.session_state.duracion_max_video - d_min)
+            nuevo_fin = st.session_state.duracion_max_video
+            
+        clips_finales.append({"inicio": round(nuevo_ini, 1), "fin": round(nuevo_fin, 1), "titulo": "MOMENTO DESTACADO"})
+
+    # Por si la IA nos da de más
+    return clips_finales[:cant]
 
 def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, col_bg, ass_fs, col_sub, out, mv, logo):
     ts = int(time.time() * 1000)
@@ -397,7 +427,6 @@ else:
         st.caption(st.session_state.user_email)
         st.markdown(f"<div style='background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 15px; text-align: center; margin: 20px 0;'><h2 style='margin:0; font-weight: 800;'>{creditos} <span style='font-size: 14px; color: #888;'>créditos</span></h2></div>", unsafe_allow_html=True)
         
-        # MENÚ DE NAVEGACIÓN
         menu_principal = st.radio("Menú", ["✂️ Crear Clips", "📚 Mi Biblioteca"], label_visibility="collapsed")
         st.divider()
         
@@ -445,9 +474,10 @@ else:
                 if st.button("👾 Neón", use_container_width=True): st.session_state.plantilla = "Neón 👾"; st.rerun()
                 
             plantilla = st.session_state.plantilla
-            if plantilla == "Hormozi 💛": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#FFFFFF", "#000000", "#FFFF00", 110, 4, 450, 80
-            elif plantilla == "Podcast 🎙️": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Arial", "#FFFFFF", "#333333", "#FFFFFF", 80, 3, 350, 60
-            else: f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#00FFFF", "#111111", "#FF00FF", 100, 4, 400, 80
+            # HEMOS REDUCIDO LOS TAMAÑOS DE LAS LETRAS (de 80 a 60) PARA QUE NADA SE SALGA
+            if plantilla == "Hormozi 💛": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#FFFFFF", "#000000", "#FFFF00", 110, 4, 450, 60
+            elif plantilla == "Podcast 🎙️": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Arial", "#FFFFFF", "#333333", "#FFFFFF", 80, 3, 350, 50
+            else: f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#00FFFF", "#111111", "#FF00FF", 100, 4, 400, 60
             col_s_ass = hex_a_ass(c_s)
             
             st.divider()
@@ -483,7 +513,7 @@ else:
             if btn_crear:
                 if modo_subida == "🔴 Enlace YouTube" and not url_video: st.warning("⚠️ Pega un enlace.")
                 elif modo_subida == "📁 Archivo Manual" and not archivo_subido: st.warning("⚠️ Sube archivo.")
-                elif creditos < 1: st.error("❌ No tienes suficientes créditos para iniciar.")
+                elif creditos < cant_clips: st.error("❌ No tienes suficientes créditos para esta petición.")
                 else:
                     st.session_state.mis_clips_data = []
                     st.session_state.aviso_ia = ""
@@ -501,13 +531,6 @@ else:
                             with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
                             clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
                         
-                        if len(clips_a_renderizar) > creditos:
-                            st.warning(f"⚠️ Has pedido más clips de los créditos que tienes. Solo se generarán los primeros {creditos}.")
-                            clips_a_renderizar = clips_a_renderizar[:creditos]
-                            
-                        if len(clips_a_renderizar) < cant_clips and len(clips_a_renderizar) > 0:
-                            st.session_state.aviso_ia = f"💡 Pediste {cant_clips} clips, pero la IA ha seleccionado los {len(clips_a_renderizar)} mejores momentos exactos para evitar cortes malos."
-
                         if len(clips_a_renderizar) > 0:
                             for i, cl in enumerate(clips_a_renderizar):
                                 espacio_animacion.markdown(f"<h3>✂️ Renderizando clip {i+1}/{len(clips_a_renderizar)}...</h3>", unsafe_allow_html=True)
@@ -522,7 +545,7 @@ else:
                                             "ruta_archivo": r
                                         }).execute()
                                     except Exception as e:
-                                        pass # Si RLS está bloqueando, simplemente no se guarda pero no rompe la app
+                                        pass
                             
                             espacio_animacion.empty()
                             clips_logrados = len(st.session_state.mis_clips_data)
@@ -532,7 +555,7 @@ else:
                                 st.rerun()
                         else:
                             espacio_animacion.empty()
-                            st.error("⚠️ La IA no pudo encontrar clips que encajen en esos tiempos. Prueba ampliando la duración.")
+                            st.error("⚠️ Ha ocurrido un error al buscar clips.")
 
                     except Exception as e:
                         espacio_animacion.empty()
@@ -549,8 +572,8 @@ else:
                     for clip in st.session_state.mis_clips_data:
                         n_limpio = re.sub(r'[^\w\s-]', '', clip["titulo"]).strip().replace(" ", "_")
                         zipf.write(clip["ruta"], f"Clip_{clip['id']}_{n_limpio}.mp4")
-                with open(zip_path, "rb") as f: 
-                    st.download_button(label="📦 Descargar TODOS (.zip)", data=f, file_name="Tyvidoo_Clips.zip", mime="application/zip", use_container_width=True)
+            with open(zip_path, "rb") as f: 
+                st.download_button(label="📦 Descargar TODOS (.zip)", data=f, file_name="Tyvidoo_Clips.zip", mime="application/zip", use_container_width=True)
 
             st.divider()
             cols = st.columns(3)
