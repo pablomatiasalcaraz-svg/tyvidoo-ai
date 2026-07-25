@@ -94,6 +94,7 @@ if "whisper_data" not in st.session_state: st.session_state.whisper_data = None
 if "video_bruto_path" not in st.session_state: st.session_state.video_bruto_path = None
 if "duracion_max_video" not in st.session_state: st.session_state.duracion_max_video = 100.0
 if "show_auth" not in st.session_state: st.session_state.show_auth = False
+if "aviso_ia" not in st.session_state: st.session_state.aviso_ia = ""
 
 # --- FUNCIONES DE BASE DE DATOS ---
 def registrar_usuario(email, password):
@@ -214,7 +215,6 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
 
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎯 Encontrando los momentos más virales...</h3></div>", unsafe_allow_html=True)
     
-    # PROMPT ESTRICTO FORZANDO LA CANTIDAD EXACTA
     prompt_completo = f"""Actúa como un experto editor de TikTok. Tu misión es extraer EXACTAMENTE {cant} clips virales del texto. 
     REGLAS ESTRICTAS:
     1. TIENES que devolver exactamente {cant} clips. Ni uno más, ni uno menos. Si el vídeo es corto, permite ligeros solapamientos, pero cumple el número.
@@ -393,7 +393,6 @@ else:
         st.divider()
         st.markdown("<b>🎨 Elige tu Diseño Final</b>", unsafe_allow_html=True)
         
-        # SELECTOR VISUAL INTERACTIVO CON BOTONES
         col_p1, col_p2, col_p3 = st.columns(3)
         b1 = "2px solid #fff" if st.session_state.plantilla == "Hormozi 💛" else "1px solid #333"
         b2 = "2px solid #fff" if st.session_state.plantilla == "Podcast 🎙️" else "1px solid #333"
@@ -431,7 +430,6 @@ else:
             
         plantilla = st.session_state.plantilla
         
-        # Configurar variables de diseño según la selección visual
         if plantilla == "Hormozi 💛": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#FFFFFF", "#000000", "#FFFF00", 110, 4, 450, 80
         elif plantilla == "Podcast 🎙️": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Arial", "#FFFFFF", "#333333", "#FFFFFF", 80, 3, 350, 60
         else: f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#00FFFF", "#111111", "#FF00FF", 100, 4, 400, 80
@@ -441,12 +439,17 @@ else:
         archivo_logo = st.file_uploader("Marca de Agua (PNG)", type=["png"])
         
         st.divider()
-        modo_prueba = st.toggle("🧪 Modo Desarrollador (1 min)", value=True)
+        modo_prueba = st.toggle("🧪 Modo Desarrollador (1 min)", value=False) # Ahora desactivado por defecto
         
         if st.button("🚪 Cerrar Sesión", use_container_width=True):
             st.session_state.logged_in = False; st.session_state.user_email = ""; st.rerun()
 
     st.markdown("<div class='dash-header'><div class='dash-title'>✂️ Espacio de Trabajo</div></div>", unsafe_allow_html=True)
+    
+    # MOSTRAR EL AVISO SI LA IA HA RECORTADO MENOS CLIPS POR CALIDAD
+    if st.session_state.aviso_ia:
+        st.warning(st.session_state.aviso_ia)
+
     espacio_animacion = st.empty()
 
     if not st.session_state.mis_clips_data:
@@ -464,6 +467,7 @@ else:
             elif creditos < 1: st.error("❌ No tienes suficientes créditos para iniciar.")
             else:
                 st.session_state.mis_clips_data = []
+                st.session_state.aviso_ia = ""
                 logo_path = "logo_tmp.png" if archivo_logo else None
                 if logo_path:
                     with open(logo_path, "wb") as f: f.write(archivo_logo.getbuffer())
@@ -481,6 +485,10 @@ else:
                     if len(clips_a_renderizar) > creditos:
                         st.warning(f"⚠️ Has pedido más clips de los créditos que tienes. Solo se generarán los primeros {creditos}.")
                         clips_a_renderizar = clips_a_renderizar[:creditos]
+                        
+                    # AVISO SI LA IA HA SACADO MENOS PARA MANTENER LA CALIDAD
+                    if len(clips_a_renderizar) < cant_clips and len(clips_a_renderizar) > 0:
+                        st.session_state.aviso_ia = f"💡 Pediste {cant_clips} clips, pero la IA ha seleccionado los {len(clips_a_renderizar)} mejores momentos del vídeo para garantizar calidad sin repetir escenas."
 
                     if len(clips_a_renderizar) > 0:
                         for i, cl in enumerate(clips_a_renderizar):
@@ -489,8 +497,13 @@ else:
                             if r: st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
                         
                         espacio_animacion.empty()
-                        gastar_creditos(st.session_state.user_email, len(clips_a_renderizar))
-                        st.rerun()
+                        
+                        # ASEGURAMOS EL COBRO ANTES DE RECARGAR
+                        clips_logrados = len(st.session_state.mis_clips_data)
+                        if clips_logrados > 0:
+                            gastar_creditos(st.session_state.user_email, clips_logrados)
+                            time.sleep(0.5) # Pausa mínima para que Supabase actualice bien
+                            st.rerun()
                     else:
                         espacio_animacion.empty()
                         st.error("⚠️ La IA no pudo encontrar clips que encajen en esos tiempos. Prueba ampliando la duración.")
@@ -526,4 +539,5 @@ else:
                 
         if st.button("Crear nuevo proyecto", type="primary"):
             st.session_state.mis_clips_data = []
+            st.session_state.aviso_ia = ""
             st.rerun()
