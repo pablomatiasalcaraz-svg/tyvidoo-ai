@@ -11,6 +11,7 @@ import time
 from supabase import create_client, Client
 import bcrypt
 import random
+import streamlit.components.v1 as components
 
 # --- CONFIGURACIÓN DE SECRETOS ---
 try:
@@ -91,12 +92,20 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- RECOGER PARÁMETROS DE REDIRECCIÓN DE GOOGLE ---
-# Cuando Supabase nos devuelve a la app, capturamos la sesión aquí
-query_params = st.query_params
-if "access_token" in query_params or "id_token" in st.query_params:
+# --- HACK PARA LEER EL TOKEN DE GOOGLE EN STREAMLIT ---
+components.html("""
+    <script>
+        if (window.parent.location.hash.includes("access_token")) {
+            var newUrl = window.parent.location.href.replace('#', '?');
+            window.parent.location.replace(newUrl);
+        }
+    </script>
+""", height=0, width=0)
+
+if "access_token" in st.query_params:
     st.session_state.logged_in = True
-    # Por ahora asignamos un correo genérico si entra por Google para testear rápido
+    # Creamos un correo genérico temporal para la cuenta de Google.
+    # En un entorno de producción avanzado, usarías el SDK de Supabase Auth para extraer el correo real.
     st.session_state.user_email = "usuario_google@tyvidoo.com" 
     st.query_params.clear()
 
@@ -110,6 +119,7 @@ if "video_bruto_path" not in st.session_state: st.session_state.video_bruto_path
 if "duracion_max_video" not in st.session_state: st.session_state.duracion_max_video = 100.0
 if "show_auth" not in st.session_state: st.session_state.show_auth = False
 if "aviso_ia" not in st.session_state: st.session_state.aviso_ia = ""
+if "show_delete_confirm" not in st.session_state: st.session_state.show_delete_confirm = False
 
 # --- FUNCIONES DE BASE DE DATOS ---
 def registrar_usuario(email, password):
@@ -117,7 +127,6 @@ def registrar_usuario(email, password):
     try:
         password_bytes = password.strip()[:72].encode('utf-8')
         hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode('utf-8')
-        # Regalamos 30 créditos al registrarse
         supabase.table("usuarios").insert({"email": email, "password_hash": hashed_password, "creditos": 30}).execute()
         return True, ""
     except Exception as e: 
@@ -136,7 +145,6 @@ def login_usuario(email, password):
 
 def obtener_creditos(email):
     email = email.lower().strip()
-    # Si es usuario de Google y no está en la BD, le damos un saldo virtual para que pueda usarlo
     if email == "usuario_google@tyvidoo.com": return 100 
     try:
         respuesta = supabase.table("usuarios").select("creditos").eq("email", email).execute()
@@ -146,7 +154,7 @@ def obtener_creditos(email):
 
 def gastar_creditos(email, cantidad):
     email = email.lower().strip()
-    if email == "usuario_google@tyvidoo.com": return True # Skip cobro para el mock de google temporal
+    if email == "usuario_google@tyvidoo.com": return True 
     try:
         respuesta = supabase.table("usuarios").select("creditos").eq("email", email).execute()
         if len(respuesta.data) > 0 and respuesta.data[0]["creditos"] >= cantidad:
@@ -408,7 +416,6 @@ if not st.session_state.logged_in:
         st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 800;'>Comienza a crear</h2></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            # ENLACE OAUTH GOOGLE CORREGIDO AQUÍ 👇
             url_oauth_google = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=https://aware-mercy-production-e677.up.railway.app"
             st.markdown(f"""
                 <a href="{url_oauth_google}" target="_self" class="google-btn">
@@ -511,6 +518,26 @@ else:
             st.divider()
             modo_prueba = st.toggle("🧪 Modo Desarrollador (1 min)", value=False)
             
+        st.divider()
+        if st.button("🗑️ Eliminar mi cuenta", use_container_width=True):
+            st.session_state.show_delete_confirm = True
+            
+        if st.session_state.get("show_delete_confirm", False):
+            st.warning("⚠️ ¿Estás seguro? Perderás todos tus créditos y el acceso a tu biblioteca.")
+            if st.button("Sí, borrar mis datos", type="primary", use_container_width=True):
+                try:
+                    # Borramos historial y usuario de la base de datos
+                    supabase.table("historial_clips").delete().eq("email_usuario", st.session_state.user_email).execute()
+                    supabase.table("usuarios").delete().eq("email", st.session_state.user_email).execute()
+                except: pass
+                st.session_state.logged_in = False
+                st.session_state.user_email = ""
+                st.session_state.show_delete_confirm = False
+                st.rerun()
+            if st.button("Cancelar", use_container_width=True):
+                st.session_state.show_delete_confirm = False
+                st.rerun()
+
         if st.button("🚪 Cerrar Sesión", use_container_width=True):
             st.session_state.logged_in = False; st.session_state.user_email = ""; st.rerun()
 
@@ -623,7 +650,7 @@ else:
                 st.session_state.aviso_ia = ""
                 st.rerun()
 
-    # --- PESTAÑA DE LA BIBLIOTECA (AHORA 100% NUBE) ---
+    # --- PESTAÑA DE LA BIBLIOTECA ---
     elif menu_principal == "📚 Mi Biblioteca":
         st.markdown("<h3>Tus clips guardados en la nube</h3>", unsafe_allow_html=True)
         st.info("💡 Estos clips se guardan de forma segura durante 7 días.")
