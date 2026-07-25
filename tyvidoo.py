@@ -83,8 +83,22 @@ st.markdown("""
     .video-mockup img { border-radius: 10px; width: 100%; object-fit: cover; aspect-ratio: 9/16; opacity: 0.8;}
     
     .clip-preview-container { border: 1px solid #333; border-radius: 10px; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,0.02); }
+    
+    /* Estilos para el botón de Google */
+    .google-btn { display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #000000; font-weight: 600; border-radius: 12px; padding: 12px; text-decoration: none; font-size: 16px; border: 1px solid #ddd; margin-top: 15px; transition: background 0.2s; text-align: center; width: 100%; }
+    .google-btn:hover { background-color: #f1f1f1; }
+    .google-btn img { width: 20px; margin-right: 10px; }
     </style>
 """, unsafe_allow_html=True)
+
+# --- RECOGER PARÁMETROS DE REDIRECCIÓN DE GOOGLE ---
+# Cuando Supabase nos devuelve a la app, capturamos la sesión aquí
+query_params = st.query_params
+if "access_token" in query_params or "id_token" in st.query_params:
+    st.session_state.logged_in = True
+    # Por ahora asignamos un correo genérico si entra por Google para testear rápido
+    st.session_state.user_email = "usuario_google@tyvidoo.com" 
+    st.query_params.clear()
 
 # --- INICIALIZAR MEMORIA ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
@@ -103,6 +117,7 @@ def registrar_usuario(email, password):
     try:
         password_bytes = password.strip()[:72].encode('utf-8')
         hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode('utf-8')
+        # Regalamos 30 créditos al registrarse
         supabase.table("usuarios").insert({"email": email, "password_hash": hashed_password, "creditos": 30}).execute()
         return True, ""
     except Exception as e: 
@@ -121,6 +136,8 @@ def login_usuario(email, password):
 
 def obtener_creditos(email):
     email = email.lower().strip()
+    # Si es usuario de Google y no está en la BD, le damos un saldo virtual para que pueda usarlo
+    if email == "usuario_google@tyvidoo.com": return 100 
     try:
         respuesta = supabase.table("usuarios").select("creditos").eq("email", email).execute()
         if len(respuesta.data) > 0: return respuesta.data[0]["creditos"]
@@ -129,6 +146,7 @@ def obtener_creditos(email):
 
 def gastar_creditos(email, cantidad):
     email = email.lower().strip()
+    if email == "usuario_google@tyvidoo.com": return True # Skip cobro para el mock de google temporal
     try:
         respuesta = supabase.table("usuarios").select("creditos").eq("email", email).execute()
         if len(respuesta.data) > 0 and respuesta.data[0]["creditos"] >= cantidad:
@@ -241,16 +259,13 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
     except Exception:
         clips = []
         
-    # --- RED DE SEGURIDAD PYTHON (VARIEDAD DE TIEMPOS) ---
     clips_finales = []
     for c in clips:
         ini = float(c.get("inicio", 0))
         fin = float(c.get("fin", ini + d_min))
         tit = str(c.get("titulo", "MOMENTO VIRAL"))
         
-        # 1. Ajuste natural de tiempos (Evitamos el efecto clon)
         if (fin - ini) < d_min: 
-            # Sumamos un tiempo aleatorio entre d_min y d_max para que varíen
             fin = ini + random.uniform(d_min, d_max)
         if (fin - ini) > d_max: 
             fin = ini + d_max
@@ -259,17 +274,15 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
             fin = st.session_state.duracion_max_video
             ini = max(0, fin - d_min)
             
-        # 2. Forzar títulos cortos 
         palabras_tit = tit.split()
         if len(palabras_tit) > 4: tit = " ".join(palabras_tit[:4])
             
         clips_finales.append({"inicio": round(ini, 1), "fin": round(fin, 1), "titulo": tit.upper()})
 
-    # 3. Forzar cantidad exacta
     while len(clips_finales) < cant:
         ultimo_fin = clips_finales[-1]["fin"] if clips_finales else 0
         nuevo_ini = ultimo_fin + 5 
-        nuevo_fin = nuevo_ini + random.uniform(d_min, d_max) # También aleatorio aquí
+        nuevo_fin = nuevo_ini + random.uniform(d_min, d_max)
         if nuevo_fin > st.session_state.duracion_max_video:
             nuevo_ini = max(0, st.session_state.duracion_max_video - d_min)
             nuevo_fin = st.session_state.duracion_max_video
@@ -302,7 +315,7 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
     return out_vid if os.path.exists(out_vid) else None
 
 # ==========================================
-# VISTA 1: LANDING PAGE
+# VISTA 1: LANDING PAGE + LOGIN GOOGLE
 # ==========================================
 if not st.session_state.logged_in:
     col_logo, col_space, col_login = st.columns([2, 5, 1])
@@ -395,6 +408,16 @@ if not st.session_state.logged_in:
         st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 800;'>Comienza a crear</h2></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
+            # ENLACE OAUTH GOOGLE CORREGIDO AQUÍ 👇
+            url_oauth_google = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=https://aware-mercy-production-e677.up.railway.app"
+            st.markdown(f"""
+                <a href="{url_oauth_google}" target="_self" class="google-btn">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"> Continuar con Google
+                </a>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<p style='text-align:center; margin:20px 0; color:#555;'>— O CON TU CORREO —</p>", unsafe_allow_html=True)
+            
             tab1, tab2 = st.tabs(["📝 Registrarse", "🔐 Iniciar Sesión"])
             with tab1:
                 with st.form("reg_form"):
@@ -533,10 +556,6 @@ else:
                             with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
                             clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
                         
-                        if len(clips_a_renderizar) > creditos:
-                            st.warning(f"⚠️ Has pedido más clips de los créditos que tienes. Solo se generarán los primeros {creditos}.")
-                            clips_a_renderizar = clips_a_renderizar[:creditos]
-
                         if len(clips_a_renderizar) > 0:
                             for i, cl in enumerate(clips_a_renderizar):
                                 espacio_animacion.markdown(f"<h3>✂️ Renderizando clip {i+1}/{len(clips_a_renderizar)}...</h3>", unsafe_allow_html=True)
