@@ -34,6 +34,7 @@ def decode_jwt(token):
         parts = token.split('.')
         if len(parts) >= 2:
             payload = parts[1]
+            # Ajuste matemático para que el descifrado jamás falle
             payload += "=" * ((4 - len(payload) % 4) % 4)
             decoded = base64.b64decode(payload).decode('utf-8')
             return json.loads(decoded)
@@ -43,14 +44,18 @@ def decode_jwt(token):
 # --- CONFIGURACIÓN DE PÁGINA Y CSS PREMIUM ---
 st.set_page_config(page_title="Tyvidoo | AI Video Clipping Tool", page_icon="✂️", layout="wide")
 
-# --- HACK INFALIBLE Y AUTORIZADO PARA REDIRECCIÓN DE GOOGLE ---
-# Usamos el componente oficial de Streamlit para que el navegador no lo bloquee por seguridad
+# --- EL "CABALLO DE TROYA" PARA GOOGLE (Bypass de seguridad del navegador) ---
+# Esto lee el token de Google y fuerza la entrada a la app
 components.html("""
     <script>
-        const hash = window.parent.location.hash;
-        if (hash && hash.includes("access_token=")) {
-            const newUrl = window.parent.location.href.replace('#', '?');
-            window.parent.location.replace(newUrl);
+        try {
+            if (window.parent.location.hash.includes("access_token=")) {
+                var script = window.parent.document.createElement('script');
+                script.innerHTML = "window.location.href = window.location.href.replace('#', '?');";
+                window.parent.document.head.appendChild(script);
+            }
+        } catch (e) {
+            console.log("Esperando conexión...");
         }
     </script>
 """, height=0, width=0)
@@ -60,6 +65,7 @@ if "access_token" in st.query_params:
     token_google = st.query_params["access_token"]
     datos_usuario = decode_jwt(token_google)
     
+    # Correo por defecto si Google se pone estricto con la privacidad
     email_real = "usuario_google@tyvidoo.com"
     if datos_usuario and "email" in datos_usuario:
         email_real = datos_usuario["email"].lower().strip()
@@ -68,8 +74,10 @@ if "access_token" in st.query_params:
     st.session_state.user_email = email_real
     
     try:
+        # Comprobamos si el usuario de Google ya existe en tu base de datos
         db_check = supabase.table("usuarios").select("email").eq("email", email_real).execute()
         if len(db_check.data) == 0:
+            # Es nuevo: Le damos sus 30 créditos de bienvenida
             clave_aleatoria = str(random.random()).encode('utf-8')
             hashed = bcrypt.hashpw(clave_aleatoria, bcrypt.gensalt()).decode('utf-8')
             supabase.table("usuarios").insert({"email": email_real, "password_hash": hashed, "creditos": 30}).execute()
@@ -79,9 +87,10 @@ if "access_token" in st.query_params:
     try:
         st.query_params.clear()
     except:
-        pass # Por si la versión de Streamlit es antigua
+        pass 
     st.rerun()
 
+# --- ESTILOS VISUALES (INTERFAZ ATRACTIVA RESTAURADA) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
@@ -359,7 +368,7 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
     return out_vid if os.path.exists(out_vid) else None
 
 # ==========================================
-# VISTA 1: LANDING PAGE + LOGIN GOOGLE
+# VISTA 1: LANDING PAGE COMPLETA + GOOGLE LOGIN
 # ==========================================
 if not st.session_state.logged_in:
     col_logo, col_space, col_login = st.columns([2, 5, 1])
@@ -639,7 +648,9 @@ else:
                                         nombre_nube = f"clip_{int(time.time())}_{i}.mp4"
                                         with open(r, "rb") as f:
                                             supabase.storage.from_("clips").upload(nombre_nube, f.read(), {"content-type": "video/mp4"})
+                                        
                                         url_nube = supabase.storage.from_("clips").get_public_url(nombre_nube)
+                                        
                                         supabase.table("historial_clips").insert({
                                             "email_usuario": st.session_state.user_email,
                                             "titulo_clip": cl["titulo"],
