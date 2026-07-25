@@ -10,6 +10,7 @@ from openai import OpenAI
 import time
 from supabase import create_client, Client
 import bcrypt
+import random
 
 # --- CONFIGURACIÓN DE SECRETOS ---
 try:
@@ -240,39 +241,41 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
     except Exception:
         clips = []
         
-    # --- RED DE SEGURIDAD PYTHON (CERO ERRORES DE LA IA) ---
+    # --- RED DE SEGURIDAD PYTHON (VARIEDAD DE TIEMPOS) ---
     clips_finales = []
     for c in clips:
         ini = float(c.get("inicio", 0))
         fin = float(c.get("fin", ini + d_min))
         tit = str(c.get("titulo", "MOMENTO VIRAL"))
         
-        # 1. Forzar tiempos matemáticamente (Anti-pereza)
-        if (fin - ini) < d_min: fin = ini + d_min
-        if (fin - ini) > d_max: fin = ini + d_max
+        # 1. Ajuste natural de tiempos (Evitamos el efecto clon)
+        if (fin - ini) < d_min: 
+            # Sumamos un tiempo aleatorio entre d_min y d_max para que varíen
+            fin = ini + random.uniform(d_min, d_max)
+        if (fin - ini) > d_max: 
+            fin = ini + d_max
+            
         if fin > st.session_state.duracion_max_video: 
             fin = st.session_state.duracion_max_video
             ini = max(0, fin - d_min)
             
-        # 2. Forzar títulos cortos (Anti-salidas de pantalla)
+        # 2. Forzar títulos cortos 
         palabras_tit = tit.split()
-        if len(palabras_tit) > 4: 
-            tit = " ".join(palabras_tit[:4])
+        if len(palabras_tit) > 4: tit = " ".join(palabras_tit[:4])
             
         clips_finales.append({"inicio": round(ini, 1), "fin": round(fin, 1), "titulo": tit.upper()})
 
-    # 3. Forzar cantidad exacta (Si la IA se rinde, rellenamos nosotros)
+    # 3. Forzar cantidad exacta
     while len(clips_finales) < cant:
         ultimo_fin = clips_finales[-1]["fin"] if clips_finales else 0
-        nuevo_ini = ultimo_fin + 5 # Empezamos 5 segundos después del último
-        nuevo_fin = nuevo_ini + d_min
+        nuevo_ini = ultimo_fin + 5 
+        nuevo_fin = nuevo_ini + random.uniform(d_min, d_max) # También aleatorio aquí
         if nuevo_fin > st.session_state.duracion_max_video:
             nuevo_ini = max(0, st.session_state.duracion_max_video - d_min)
             nuevo_fin = st.session_state.duracion_max_video
             
         clips_finales.append({"inicio": round(nuevo_ini, 1), "fin": round(nuevo_fin, 1), "titulo": "MOMENTO DESTACADO"})
 
-    # Por si la IA nos da de más
     return clips_finales[:cant]
 
 def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, col_bg, ass_fs, col_sub, out, mv, logo):
@@ -474,7 +477,6 @@ else:
                 if st.button("👾 Neón", use_container_width=True): st.session_state.plantilla = "Neón 👾"; st.rerun()
                 
             plantilla = st.session_state.plantilla
-            # HEMOS REDUCIDO LOS TAMAÑOS DE LAS LETRAS (de 80 a 60) PARA QUE NADA SE SALGA
             if plantilla == "Hormozi 💛": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#FFFFFF", "#000000", "#FFFF00", 110, 4, 450, 60
             elif plantilla == "Podcast 🎙️": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Arial", "#FFFFFF", "#333333", "#FFFFFF", 80, 3, 350, 50
             else: f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#00FFFF", "#111111", "#FF00FF", 100, 4, 400, 60
@@ -531,21 +533,32 @@ else:
                             with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
                             clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
                         
+                        if len(clips_a_renderizar) > creditos:
+                            st.warning(f"⚠️ Has pedido más clips de los créditos que tienes. Solo se generarán los primeros {creditos}.")
+                            clips_a_renderizar = clips_a_renderizar[:creditos]
+
                         if len(clips_a_renderizar) > 0:
                             for i, cl in enumerate(clips_a_renderizar):
                                 espacio_animacion.markdown(f"<h3>✂️ Renderizando clip {i+1}/{len(clips_a_renderizar)}...</h3>", unsafe_allow_html=True)
                                 r = renderizar_un_clip(i+1, cl["inicio"], cl["fin"], cl["titulo"], st.session_state.whisper_data, st.session_state.video_bruto_path, f"/System/Library/Fonts/Supplemental/{f_def}.ttf", tfs, c_t, c_b, afs, col_s_ass, aout, amv, logo_path)
                                 if r: 
                                     st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
-                                    # GUARDAR EN BIBLIOTECA 
+                                    
+                                    # SUBIR A SUPABASE STORAGE Y GUARDAR EN BIBLIOTECA
                                     try:
+                                        nombre_nube = f"clip_{int(time.time())}_{i}.mp4"
+                                        with open(r, "rb") as f:
+                                            supabase.storage.from_("clips").upload(nombre_nube, f.read(), {"content-type": "video/mp4"})
+                                        
+                                        url_nube = supabase.storage.from_("clips").get_public_url(nombre_nube)
+                                        
                                         supabase.table("historial_clips").insert({
                                             "email_usuario": st.session_state.user_email,
                                             "titulo_clip": cl["titulo"],
-                                            "ruta_archivo": r
+                                            "ruta_archivo": url_nube
                                         }).execute()
                                     except Exception as e:
-                                        pass
+                                        print("Error Storage:", e)
                             
                             espacio_animacion.empty()
                             clips_logrados = len(st.session_state.mis_clips_data)
@@ -562,7 +575,7 @@ else:
                         st.error(f"Error procesando: {e}")
 
         elif st.session_state.mis_clips_data:
-            st.success("✅ ¡Tus clips están listos! También se han guardado en tu Biblioteca.")
+            st.success("✅ ¡Tus clips están listos! También se han guardado permanentemente en tu Biblioteca.")
             
             col_tit, col_btn = st.columns([3, 1])
             with col_tit: st.markdown("<h3 style='margin:0;'>Galería Final</h3>", unsafe_allow_html=True)
@@ -591,10 +604,10 @@ else:
                 st.session_state.aviso_ia = ""
                 st.rerun()
 
-    # --- PESTAÑA DE LA BIBLIOTECA ---
+    # --- PESTAÑA DE LA BIBLIOTECA (AHORA 100% NUBE) ---
     elif menu_principal == "📚 Mi Biblioteca":
-        st.markdown("<h3>Tus clips guardados</h3>", unsafe_allow_html=True)
-        st.info("⚠️ Nota técnica: Los archivos mostrados aquí son temporales de sesión. Para un almacenamiento definitivo conectaremos Supabase Storage pronto.")
+        st.markdown("<h3>Tus clips guardados en la nube</h3>", unsafe_allow_html=True)
+        st.info("💡 Estos clips se guardan de forma segura durante 7 días.")
         try:
             res_bib = supabase.table("historial_clips").select("*").eq("email_usuario", st.session_state.user_email).order("fecha_creacion", desc=True).execute()
             if not res_bib.data:
@@ -604,13 +617,9 @@ else:
                 for idx, b_clip in enumerate(res_bib.data):
                     with cols_b[idx % 3]:
                         st.markdown(f"<div class='glass-card'>", unsafe_allow_html=True)
-                        if os.path.exists(b_clip['ruta_archivo']):
-                            st.video(b_clip['ruta_archivo'])
-                            with open(b_clip['ruta_archivo'], "rb") as f:
-                                st.download_button(label="⬇️ Descargar HD", data=f, file_name=f"{b_clip['titulo_clip']}.mp4", mime="video/mp4", use_container_width=True, key=f"bib_dl_{b_clip['id']}")
-                        else:
-                            st.warning("Vídeo expirado o no encontrado.")
+                        st.video(b_clip['ruta_archivo'])
+                        st.link_button("⬇️ Descargar HD", b_clip['ruta_archivo'], use_container_width=True)
                         st.markdown(f"<b style='display:block; margin: 10px 0;'>{b_clip['titulo_clip']}</b>", unsafe_allow_html=True)
                         st.markdown("</div>", unsafe_allow_html=True)
         except Exception as e:
-            st.error("Error al cargar la biblioteca. Asegúrate de haber quitado el Row Level Security en Supabase.")
+            st.error("Error al cargar la biblioteca. Asegúrate de haber completado los pasos de Supabase.")
