@@ -215,10 +215,9 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
 
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎯 Mapeando los cortes exactos...</h3></div>", unsafe_allow_html=True)
     
-    # 🔴 AQUÍ ESTÁ LA MAGIA: LE PASAMOS EL TEXTO CON EL RELOJ EXACTO 🔴
     transcript_con_tiempos = ""
     palabras = res_w.get("words", [])
-    for i in range(0, len(palabras), 15): # Bloques de 15 palabras
+    for i in range(0, len(palabras), 15):
         chunk = palabras[i:i+15]
         if chunk:
             ini = chunk[0]['start']
@@ -226,12 +225,13 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
             txt = " ".join([p['word'] for p in chunk])
             transcript_con_tiempos += f"[{ini:.1f}s - {fin:.1f}s] {txt}\n"
     
+    # NUEVO PROMPT SUPER ESTRICTO CON LAS MATEMÁTICAS DEL TIEMPO
     prompt_completo = f"""Actúa como un experto editor de TikTok. Extrae EXACTAMENTE {cant} clips virales.
-    Te paso el texto del vídeo etiquetado con las marcas de tiempo exactas [inicio - fin].
-    REGLAS ESTRICTAS:
+    Te paso el texto del vídeo etiquetado con las marcas de tiempo [inicio - fin].
+    REGLAS ESTRICTAS E INQUEBRANTABLES:
     1. Tienes que devolver exactamente {cant} clips.
-    2. Cada clip debe durar entre {d_min} y {d_max} segundos.
-    3. Usa las marcas de tiempo que te doy para hacer cortes naturales (donde empiece y acabe una frase con sentido). NO CORTES PALABRAS A LA MITAD NI INVENTES TIEMPOS.
+    2. LA DURACIÓN ES SAGRADA: Cada clip DEBE durar entre {d_min} y {d_max} segundos. Tienes que SUMAR varios bloques de texto consecutivos para alcanzar ese tiempo. Asegúrate matemáticamente de que el 'fin' menos el 'inicio' de cada clip sea mayor que {d_min}. ¡Prohibido hacer clips de 4 o 10 segundos!
+    3. Busca cortes naturales con sentido agrupando todo lo necesario.
     4. Títulos en ESPAÑOL, muy clickbait (máximo 5 palabras). 
     Devuelve un JSON EXACTO: {{"clips": [{{"inicio": 10.5, "fin": 42.1, "titulo": "TITULO"}}]}}"""
     
@@ -397,7 +397,7 @@ else:
         st.caption(st.session_state.user_email)
         st.markdown(f"<div style='background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 15px; text-align: center; margin: 20px 0;'><h2 style='margin:0; font-weight: 800;'>{creditos} <span style='font-size: 14px; color: #888;'>créditos</span></h2></div>", unsafe_allow_html=True)
         
-        # NUEVO MENÚ DE NAVEGACIÓN
+        # MENÚ DE NAVEGACIÓN
         menu_principal = st.radio("Menú", ["✂️ Crear Clips", "📚 Mi Biblioteca"], label_visibility="collapsed")
         st.divider()
         
@@ -514,14 +514,15 @@ else:
                                 r = renderizar_un_clip(i+1, cl["inicio"], cl["fin"], cl["titulo"], st.session_state.whisper_data, st.session_state.video_bruto_path, f"/System/Library/Fonts/Supplemental/{f_def}.ttf", tfs, c_t, c_b, afs, col_s_ass, aout, amv, logo_path)
                                 if r: 
                                     st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
-                                    # GUARDAR EN BIBLIOTECA (Base de datos)
+                                    # GUARDAR EN BIBLIOTECA 
                                     try:
                                         supabase.table("historial_clips").insert({
                                             "email_usuario": st.session_state.user_email,
                                             "titulo_clip": cl["titulo"],
                                             "ruta_archivo": r
                                         }).execute()
-                                    except: pass
+                                    except Exception as e:
+                                        pass # Si RLS está bloqueando, simplemente no se guarda pero no rompe la app
                             
                             espacio_animacion.empty()
                             clips_logrados = len(st.session_state.mis_clips_data)
@@ -569,7 +570,8 @@ else:
 
     # --- PESTAÑA DE LA BIBLIOTECA ---
     elif menu_principal == "📚 Mi Biblioteca":
-        st.markdown("<h3>Tus clips guardados (Últimos 7 días)</h3>", unsafe_allow_html=True)
+        st.markdown("<h3>Tus clips guardados</h3>", unsafe_allow_html=True)
+        st.info("⚠️ Nota técnica: Los archivos mostrados aquí son temporales de sesión. Para un almacenamiento definitivo conectaremos Supabase Storage pronto.")
         try:
             res_bib = supabase.table("historial_clips").select("*").eq("email_usuario", st.session_state.user_email).order("fecha_creacion", desc=True).execute()
             if not res_bib.data:
@@ -588,4 +590,4 @@ else:
                         st.markdown(f"<b style='display:block; margin: 10px 0;'>{b_clip['titulo_clip']}</b>", unsafe_allow_html=True)
                         st.markdown("</div>", unsafe_allow_html=True)
         except Exception as e:
-            st.error("Error al cargar la biblioteca. Asegúrate de haber creado la tabla 'historial_clips' en Supabase.")
+            st.error("Error al cargar la biblioteca. Asegúrate de haber quitado el Row Level Security en Supabase.")
