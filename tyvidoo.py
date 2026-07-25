@@ -12,6 +12,7 @@ from supabase import create_client, Client
 import bcrypt
 import random
 import base64
+import streamlit.components.v1 as components
 
 # --- CONFIGURACIÓN DE SECRETOS ---
 try:
@@ -27,13 +28,12 @@ except Exception as e:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# --- FUNCIÓN DE DESENCRIPTADO PARA GOOGLE (MEJORADA) ---
+# --- FUNCIÓN DE DESENCRIPTADO PARA GOOGLE ---
 def decode_jwt(token):
     try:
         parts = token.split('.')
         if len(parts) >= 2:
             payload = parts[1]
-            # Corrección matemática para que jamás falle el relleno de Base64
             payload += "=" * ((4 - len(payload) % 4) % 4)
             decoded = base64.b64decode(payload).decode('utf-8')
             return json.loads(decoded)
@@ -43,23 +43,23 @@ def decode_jwt(token):
 # --- CONFIGURACIÓN DE PÁGINA Y CSS PREMIUM ---
 st.set_page_config(page_title="Tyvidoo | AI Video Clipping Tool", page_icon="✂️", layout="wide")
 
-# --- HACK INFALIBLE PARA REDIRECCIÓN DE GOOGLE ---
-# Esto transforma el '#' de Google en un '?' que Streamlit pueda entender
-st.markdown("""
-    <img src="dummy_intencionado" style="display:none;" onerror="
-        if (window.location.hash.includes('access_token=')) {
-            var newUrl = window.location.href.split('#')[0] + '?' + window.location.hash.substring(1);
-            window.location.replace(newUrl);
+# --- HACK INFALIBLE Y AUTORIZADO PARA REDIRECCIÓN DE GOOGLE ---
+# Usamos el componente oficial de Streamlit para que el navegador no lo bloquee por seguridad
+components.html("""
+    <script>
+        const hash = window.parent.location.hash;
+        if (hash && hash.includes("access_token=")) {
+            const newUrl = window.parent.location.href.replace('#', '?');
+            window.parent.location.replace(newUrl);
         }
-    ">
-""", unsafe_allow_html=True)
+    </script>
+""", height=0, width=0)
 
-# --- PROCESAR ENTRADA DE GOOGLE AUTOMÁTICAMENTE (BLINDADO) ---
+# --- PROCESAR ENTRADA DE GOOGLE AUTOMÁTICAMENTE ---
 if "access_token" in st.query_params:
     token_google = st.query_params["access_token"]
     datos_usuario = decode_jwt(token_google)
     
-    # Si por algún motivo falla, NO te echamos. Te damos un correo de emergencia.
     email_real = "usuario_google@tyvidoo.com"
     if datos_usuario and "email" in datos_usuario:
         email_real = datos_usuario["email"].lower().strip()
@@ -67,18 +67,19 @@ if "access_token" in st.query_params:
     st.session_state.logged_in = True
     st.session_state.user_email = email_real
     
-    # Comprobar si el usuario es nuevo en la base de datos
     try:
         db_check = supabase.table("usuarios").select("email").eq("email", email_real).execute()
         if len(db_check.data) == 0:
-            # Si es nuevo, lo registramos y le damos 30 créditos de bienvenida
             clave_aleatoria = str(random.random()).encode('utf-8')
             hashed = bcrypt.hashpw(clave_aleatoria, bcrypt.gensalt()).decode('utf-8')
             supabase.table("usuarios").insert({"email": email_real, "password_hash": hashed, "creditos": 30}).execute()
-    except Exception as e:
-        pass # Si falla la conexión, sigues logueado en la web sin problemas
+    except:
+        pass
         
-    st.query_params.clear()
+    try:
+        st.query_params.clear()
+    except:
+        pass # Por si la versión de Streamlit es antigua
     st.rerun()
 
 st.markdown("""
@@ -184,7 +185,6 @@ def login_usuario(email, password):
 
 def obtener_creditos(email):
     email = email.lower().strip()
-    if email == "usuario_google@tyvidoo.com": return 100 
     try:
         respuesta = supabase.table("usuarios").select("creditos").eq("email", email).execute()
         if len(respuesta.data) > 0: return respuesta.data[0]["creditos"]
@@ -193,7 +193,6 @@ def obtener_creditos(email):
 
 def gastar_creditos(email, cantidad):
     email = email.lower().strip()
-    if email == "usuario_google@tyvidoo.com": return True 
     try:
         respuesta = supabase.table("usuarios").select("creditos").eq("email", email).execute()
         if len(respuesta.data) > 0 and respuesta.data[0]["creditos"] >= cantidad:
@@ -360,7 +359,7 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
     return out_vid if os.path.exists(out_vid) else None
 
 # ==========================================
-# VISTA 1: LANDING PAGE COMPLETA + GOOGLE LOGIN
+# VISTA 1: LANDING PAGE + LOGIN GOOGLE
 # ==========================================
 if not st.session_state.logged_in:
     col_logo, col_space, col_login = st.columns([2, 5, 1])
@@ -453,7 +452,6 @@ if not st.session_state.logged_in:
         st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 800;'>Comienza a crear</h2></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            # BOTÓN OFICIAL DE GOOGLE CON SVG VECTORIZADO DE ALTA CALIDAD
             url_oauth_google = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=https://aware-mercy-production-e677.up.railway.app"
             st.markdown(f"""
                 <a href="{url_oauth_google}" target="_self" class="google-custom-btn">
@@ -637,21 +635,18 @@ else:
                                 if r: 
                                     st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
                                     
-                                    # SUBIR A SUPABASE STORAGE Y GUARDAR EN BIBLIOTECA
                                     try:
                                         nombre_nube = f"clip_{int(time.time())}_{i}.mp4"
                                         with open(r, "rb") as f:
                                             supabase.storage.from_("clips").upload(nombre_nube, f.read(), {"content-type": "video/mp4"})
-                                        
                                         url_nube = supabase.storage.from_("clips").get_public_url(nombre_nube)
-                                        
                                         supabase.table("historial_clips").insert({
                                             "email_usuario": st.session_state.user_email,
                                             "titulo_clip": cl["titulo"],
                                             "ruta_archivo": url_nube
                                         }).execute()
                                     except Exception as e:
-                                        print("Error Storage:", e)
+                                        pass
                             
                             espacio_animacion.empty()
                             clips_logrados = len(st.session_state.mis_clips_data)
