@@ -34,7 +34,6 @@ def decode_jwt(token):
         parts = token.split('.')
         if len(parts) >= 2:
             payload = parts[1]
-            # Ajuste matemático para que el descifrado jamás falle
             payload += "=" * ((4 - len(payload) % 4) % 4)
             decoded = base64.b64decode(payload).decode('utf-8')
             return json.loads(decoded)
@@ -44,8 +43,7 @@ def decode_jwt(token):
 # --- CONFIGURACIÓN DE PÁGINA Y CSS PREMIUM ---
 st.set_page_config(page_title="Tyvidoo | AI Video Clipping Tool", page_icon="✂️", layout="wide")
 
-# --- EL "CABALLO DE TROYA" PARA GOOGLE (Bypass de seguridad del navegador) ---
-# Esto lee el token de Google y fuerza la entrada a la app
+# --- EL "CABALLO DE TROYA" PARA GOOGLE ---
 components.html("""
     <script>
         try {
@@ -65,7 +63,6 @@ if "access_token" in st.query_params:
     token_google = st.query_params["access_token"]
     datos_usuario = decode_jwt(token_google)
     
-    # Correo por defecto si Google se pone estricto con la privacidad
     email_real = "usuario_google@tyvidoo.com"
     if datos_usuario and "email" in datos_usuario:
         email_real = datos_usuario["email"].lower().strip()
@@ -74,10 +71,8 @@ if "access_token" in st.query_params:
     st.session_state.user_email = email_real
     
     try:
-        # Comprobamos si el usuario de Google ya existe en tu base de datos
         db_check = supabase.table("usuarios").select("email").eq("email", email_real).execute()
         if len(db_check.data) == 0:
-            # Es nuevo: Le damos sus 30 créditos de bienvenida
             clave_aleatoria = str(random.random()).encode('utf-8')
             hashed = bcrypt.hashpw(clave_aleatoria, bcrypt.gensalt()).decode('utf-8')
             supabase.table("usuarios").insert({"email": email_real, "password_hash": hashed, "creditos": 30}).execute()
@@ -90,7 +85,7 @@ if "access_token" in st.query_params:
         pass 
     st.rerun()
 
-# --- ESTILOS VISUALES (INTERFAZ ATRACTIVA RESTAURADA) ---
+# --- ESTILOS VISUALES ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
@@ -570,26 +565,46 @@ else:
             modo_prueba = st.toggle("🧪 Modo Desarrollador (1 min)", value=False)
             
         st.divider()
-        if st.button("🗑️ Eliminar mi cuenta", use_container_width=True):
-            st.session_state.show_delete_confirm = True
-            
-        if st.session_state.get("show_delete_confirm", False):
+        
+        # --- LÓGICA CORREGIDA DEL BOTÓN DE ELIMINAR CUENTA ---
+        if not st.session_state.get("show_delete_confirm", False):
+            if st.button("🗑️ Eliminar mi cuenta", use_container_width=True):
+                st.session_state.show_delete_confirm = True
+                st.rerun() # Faltaba esto para que el botón hiciera efecto al instante
+        else:
             st.warning("⚠️ Perderás todos tus créditos y clips. ¿Seguro?")
-            if st.button("Sí, borrar mis datos", type="primary", use_container_width=True):
-                try:
-                    supabase.table("historial_clips").delete().eq("email_usuario", st.session_state.user_email).execute()
-                    supabase.table("usuarios").delete().eq("email", st.session_state.user_email).execute()
-                except: pass
-                st.session_state.logged_in = False
-                st.session_state.user_email = ""
-                st.session_state.show_delete_confirm = False
-                st.rerun()
-            if st.button("Cancelar", use_container_width=True):
-                st.session_state.show_delete_confirm = False
-                st.rerun()
+            col_yes, col_no = st.columns(2)
+            with col_yes:
+                if st.button("Sí, borrar", type="primary", use_container_width=True):
+                    try:
+                        # Si no le has quitado el RLS en Supabase, esto no borrará nada internamente
+                        supabase.table("historial_clips").delete().eq("email_usuario", st.session_state.user_email).execute()
+                        supabase.table("usuarios").delete().eq("email", st.session_state.user_email).execute()
+                    except Exception as e:
+                        pass
+                    
+                    # Pero sí cerrará tu sesión correctamente en la interfaz
+                    st.session_state.logged_in = False
+                    st.session_state.user_email = ""
+                    st.session_state.show_delete_confirm = False
+                    try:
+                        st.query_params.clear() # Limpia la URL para que no te vuelva a loguear con Google
+                    except:
+                        pass
+                    st.rerun()
+            with col_no:
+                if st.button("Cancelar", use_container_width=True):
+                    st.session_state.show_delete_confirm = False
+                    st.rerun()
 
         if st.button("🚪 Cerrar Sesión", use_container_width=True):
-            st.session_state.logged_in = False; st.session_state.user_email = ""; st.rerun()
+            st.session_state.logged_in = False
+            st.session_state.user_email = ""
+            try:
+                st.query_params.clear()
+            except:
+                pass
+            st.rerun()
 
     # --- PANTALLA PRINCIPAL ---
     st.markdown("<div class='dash-header'><div class='dash-title'>✂️ Espacio de Trabajo</div></div>", unsafe_allow_html=True)
@@ -644,6 +659,7 @@ else:
                                 if r: 
                                     st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
                                     
+                                    # SUBIR A SUPABASE STORAGE Y GUARDAR EN BIBLIOTECA
                                     try:
                                         nombre_nube = f"clip_{int(time.time())}_{i}.mp4"
                                         with open(r, "rb") as f:
