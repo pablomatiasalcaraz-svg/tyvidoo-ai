@@ -102,7 +102,7 @@ st.markdown("""
     .hero-tag { color: #E94057; font-size: 13px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px; display: inline-block; background: rgba(233, 64, 87, 0.1); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(233, 64, 87, 0.3);}
     .hero-title { font-size: 4.5rem; font-weight: 900; line-height: 1.1; letter-spacing: -2.5px; margin-bottom: 25px; }
     .hero-title-gradient { background: linear-gradient(90deg, #8A2387, #E94057, #F27121); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
-    .hero-subtitle { font-size: 1.25rem; color: #A0A0A0; font-weight: 400; max-width: 700px; margin: 0 auto 40px auto; line-height: 1.6; text-align: center; }
+    .hero-subtitle { font-size: 1.3rem; color: #A0A0A0; font-weight: 400; max-width: 750px; margin: 0 auto 40px auto; line-height: 1.6; text-align: center; }
     
     .dash-header { background: linear-gradient(135deg, #111111 0%, #050505 100%); padding: 40px; border-radius: 24px; border: 1px solid #222; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .dash-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
@@ -124,9 +124,9 @@ st.markdown("""
     .stTabs [aria-selected="true"] { color: #ffffff !important; border-bottom: 2px solid #E94057 !important; }
     
     .marquee-wrapper { overflow: hidden; white-space: nowrap; margin-top: 60px; padding: 30px 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); background: linear-gradient(90deg, #050505 0%, rgba(255,255,255,0.02) 50%, #050505 100%); }
-    .marquee-content { display: inline-block; animation: marquee 30s linear infinite; }
-    .review-card { display: inline-block; background: rgba(0,0,0,0.5); padding: 15px 30px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); margin-right: 25px; font-size: 15px; color: #bbb; backdrop-filter: blur(10px); }
-    .review-card b { color: #fff; }
+    .marquee-content { display: inline-block; animation: marquee 35s linear infinite; }
+    .review-card { display: inline-block; background: rgba(255,255,255,0.03); padding: 25px 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); margin-right: 30px; font-size: 16px; color: #ddd; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .review-author { display: block; margin-top: 12px; color: #fff; font-weight: 800; font-size: 14px; }
     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
     .section-title { font-size: 3rem; font-weight: 900; text-align: center; margin: 100px 0 20px 0; letter-spacing: -1.5px; }
@@ -143,10 +143,6 @@ st.markdown("""
     .price span { font-size: 1.1rem; color: #666; font-weight: 500; }
     .pricing-features { text-align: left; margin: 30px 0 40px 0; color: #ccc; font-size: 15px; line-height: 2.2; }
     
-    .video-mockup { background: #111; border-radius: 24px; padding: 12px; border: 1px solid #333; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
-    .video-mockup img { border-radius: 14px; width: 100%; object-fit: cover; aspect-ratio: 9/16; opacity: 0.9; transition: opacity 0.3s; }
-    .video-mockup:hover img { opacity: 1; }
-    
     .google-custom-btn {
         display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #111;
         font-weight: 700; font-size: 16px; border-radius: 14px; padding: 14px 24px;
@@ -160,6 +156,8 @@ st.markdown("""
     .pricing-btn-primary:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(233,64,87,0.5); }
     .pricing-btn-secondary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background:transparent; border:1px solid #555; color:white !important; text-decoration:none; font-weight: 600; transition: background 0.2s; }
     .pricing-btn-secondary:hover { background: rgba(255,255,255,0.05); border-color: #888; }
+    
+    .footer { margin-top: 80px; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.05); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -175,22 +173,18 @@ if "show_auth" not in st.session_state: st.session_state.show_auth = False
 if "aviso_ia" not in st.session_state: st.session_state.aviso_ia = ""
 if "show_delete_confirm" not in st.session_state: st.session_state.show_delete_confirm = False
 
-# --- FUNCIONES DE CALLBACK PARA BOTONES A PRUEBA DE FALLOS ---
+# --- FUNCIONES DE CALLBACK ---
 def logout_action():
     st.session_state.logged_in = False
     st.session_state.user_email = ""
     st.session_state.show_auth = False
     st.session_state.show_delete_confirm = False
     st.session_state.mis_clips_data = []
-    try:
-        st.query_params.clear()
+    try: st.query_params.clear()
     except: pass
 
-def confirm_delete_action():
-    st.session_state.show_delete_confirm = True
-
-def cancel_delete_action():
-    st.session_state.show_delete_confirm = False
+def confirm_delete_action(): st.session_state.show_delete_confirm = True
+def cancel_delete_action(): st.session_state.show_delete_confirm = False
 
 def execute_delete_action():
     try:
@@ -255,32 +249,6 @@ def generar_srt_por_palabras(res, ini, fin, srt):
                     palabra = p['word'].strip(caracteres_malos).upper()
                     f.write(f"{c}\n{segundos_a_srt(start_aj)} --> {segundos_a_srt(end_aj)}\n{palabra}\n\n")
                     c += 1
-
-def procesar_video_youtube(url, cant, d_min, d_max, prog):
-    for d in ["archivos_brutos", "clips_finales"]:
-        os.makedirs(d, exist_ok=True)
-        for a in os.listdir(d): 
-            if os.path.isfile(os.path.join(d, a)): os.remove(os.path.join(d, a))
-
-    v = os.path.abspath("archivos_brutos/v.mp4")
-    a = os.path.abspath("archivos_brutos/a.mp3")
-    
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>📥 Descargando vídeo...</h3></div>", unsafe_allow_html=True)
-    ydl_opts = {
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        'outtmpl': v,
-        'geo_bypass': True,
-        'nocheckcertificate': True,
-        'quiet': True,
-        'extractor_args': {'youtube': {'player_client': ['ios', 'web']}},
-        'http_headers': { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15' }
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl: ydl.download([url])
-    
-    cmd_audio = ["ffmpeg", "-y", "-i", v, "-b:a", "32k", "-map", "a", a]
-    subprocess.run(cmd_audio, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    
-    return procesar_ia(a, v, cant, d_min, d_max, prog)
 
 def procesar_video_local(archivo_path, cant, d_min, d_max, prog):
     for d in ["archivos_brutos", "clips_finales"]:
@@ -409,18 +377,16 @@ if not st.session_state.logged_in:
         <div style='text-align: center; margin-top: 40px;'>
             <div class='hero-tag'>INTELIGENCIA ARTIFICIAL PARA CREADORES</div>
             <h1 class='hero-title'>Multiplica tu audiencia.<br><span class='hero-title-gradient'>Sin multiplicar tu trabajo.</span></h1>
-            <p class='hero-subtitle'>Tyvidoo analiza tus vídeos largos y podcasts para extraer los momentos más virales, añadiendo subtítulos dinámicos estilo Hormozi de forma 100% automática.</p>
+            <p class='hero-subtitle'>Deja que nuestra IA encuentre el oro escondido en tus horas de contenido. Genera Shorts, Reels y TikToks virales listos para publicar mientras tú te tomas un café.</p>
         </div>
         """, unsafe_allow_html=True)
 
         col_pad1, col_center, col_pad2 = st.columns([2, 6, 2])
         with col_center:
-            st.markdown("<div style='background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);'>", unsafe_allow_html=True)
-            st.markdown("<h3 style='margin-bottom: 20px;'>Pruébalo ahora mismo 👇</h3>", unsafe_allow_html=True)
+            st.markdown("<div style='background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 40px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);'>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin-bottom: 25px;'>Pruébalo ahora mismo 👇</h3>", unsafe_allow_html=True)
             
-            tab1, tab2 = st.tabs(["🔴 Enlace de YouTube", "📁 Archivo Local"])
-            with tab1: st.text_input("YouTube URL", placeholder="🔗 Pega aquí un enlace de YouTube...", label_visibility="collapsed")
-            with tab2: st.file_uploader("Subir Archivo", type=["mp4", "mov"], label_visibility="collapsed")
+            st.file_uploader("Sube tu archivo de vídeo o podcast (MP4, MOV)", type=["mp4", "mov"], label_visibility="collapsed")
             
             st.markdown("</div>", unsafe_allow_html=True)
             
@@ -429,10 +395,10 @@ if not st.session_state.logged_in:
                 st.rerun()
 
         m_1 = "<div class='marquee-wrapper'><div class='marquee-content'>"
-        m_2 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Ahorro unas 10 horas de edición a la semana. Brutal.\" - <b>@creador_es</b></div>"
-        m_3 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mis vistas en TikTok se multiplicaron x5 en un mes.\" - <b>@marketing_pro</b></div>"
-        m_4 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Los subtítulos automáticos son magia pura.\" - <b>@podcast_latam</b></div>"
-        m_5 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mucho más intuitivo y rápido que Premiere.\" - <b>@streamer_xd</b></div>"
+        m_2 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Antes tardaba 5 horas en sacar clips de mi podcast. Ahora Tyvidoo lo hace en 10 minutos. Es una locura.\"<span class='review-author'>— Marcos L. (Host de Podcast)</span></div>"
+        m_3 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Llevamos 3 cuentas de clientes y esta herramienta nos ha salvado la vida. Retorno de inversión inmediato.\"<span class='review-author'>— Elena G. (Agencia de Marketing)</span></div>"
+        m_4 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Los subtítulos automáticos estilo Hormozi son clavados. Se ven súper profesionales y retienen a la gente.\"<span class='review-author'>— David R. (Creador de Contenido)</span></div>"
+        m_5 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Dejé de pagar a un editor externo por clips básicos. La IA escoge los momentos perfectos para Shorts.\"<span class='review-author'>— Sofía T. (YouTuber)</span></div>"
         m_6 = m_2 + m_3 + m_4 + m_5 + "</div></div>"
         st.markdown(m_1 + m_2 + m_3 + m_4 + m_5 + m_6, unsafe_allow_html=True)
 
@@ -440,9 +406,32 @@ if not st.session_state.logged_in:
         st.markdown("<p class='section-subtitle'>Elige entre nuestras plantillas optimizadas para retener la atención de la audiencia en TikTok, Reels y Shorts.</p>", unsafe_allow_html=True)
         
         c_vid1, c_vid2, c_vid3 = st.columns(3)
-        with c_vid1: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Hormozi 💛</h4></div>", unsafe_allow_html=True)
-        with c_vid2: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Podcast 🎙️</h4></div>", unsafe_allow_html=True)
-        with c_vid3: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Neón 👾</h4></div>", unsafe_allow_html=True)
+        with c_vid1:
+            st.markdown(f"""<div style='border: 2px solid #333; border-radius: 12px; padding: 6px; background: rgba(255,255,255,0.05); cursor:pointer;'>
+                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #222, #444, #222); position: relative; border-radius: 8px; overflow: hidden;'>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: black; color: white; font-family: Impact, sans-serif; font-size: 14px; padding: 4px 8px; text-transform: uppercase;'>TÍTULO VIRAL</span></div>
+                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&q=80) center/cover;'></div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: yellow; font-family: Impact, sans-serif; font-size: 18px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>TEXTO CLAVE</div>
+                </div>
+            </div><h4 style='margin-top:15px; text-align:center;'>Estilo Hormozi 💛</h4>""", unsafe_allow_html=True)
+            
+        with c_vid2:
+            st.markdown(f"""<div style='border: 2px solid #333; border-radius: 12px; padding: 6px; background: rgba(255,255,255,0.05);'>
+                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #111, #333, #111); position: relative; border-radius: 8px; overflow: hidden;'>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #333; color: white; font-family: Arial, sans-serif; font-size: 14px; padding: 4px 8px;'>EL TEMA</span></div>
+                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?w=400&q=80) center/cover;'></div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: white; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; text-shadow: 1px 1px 2px #000;'>Podcast</div>
+                </div>
+            </div><h4 style='margin-top:15px; text-align:center;'>Estilo Podcast 🎙️</h4>""", unsafe_allow_html=True)
+
+        with c_vid3:
+            st.markdown(f"""<div style='border: 2px solid #333; border-radius: 12px; padding: 6px; background: rgba(255,255,255,0.05);'>
+                <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #001, #003, #001); position: relative; border-radius: 8px; overflow: hidden;'>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #111; color: #0ff; font-family: Impact, sans-serif; font-size: 14px; padding: 4px 8px; text-transform: uppercase;'>MOMENTO</span></div>
+                    <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80) center/cover;'></div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: #f0f; font-family: Impact, sans-serif; font-size: 18px; text-shadow: 0 0 5px #f0f;'>GAMING</div>
+                </div>
+            </div><h4 style='margin-top:15px; text-align:center;'>Estilo Neón 👾</h4>""", unsafe_allow_html=True)
 
         st.markdown("<h2 class='section-title'>Planes simples y <span style='color:#F27121;'>transparentes</span></h2>", unsafe_allow_html=True)
         
@@ -464,7 +453,7 @@ if not st.session_state.logged_in:
             st.markdown(f"""
             <div class='pricing-card' style='margin-bottom: 15px;'>
                 <h3 style='color: #fff;'>Starter Gratuito</h3><div class='price'>$0<span>/mes</span></div>
-                <div class='pricing-features'>✔️ <b>30 créditos de regalo</b><br>✔️ Exportación a 720p<br>✔️ Enlaces de YouTube<br>❌ Límite de tamaño</div>
+                <div class='pricing-features'>✔️ <b>30 créditos de regalo</b><br>✔️ Exportación a 720p<br>✔️ Modelos estándar de IA<br>❌ Límite de tamaño</div>
             </div>
             """, unsafe_allow_html=True)
             if st.button("🎁 Crear cuenta gratis", use_container_width=True):
@@ -489,6 +478,17 @@ if not st.session_state.logged_in:
                 <a href='{link_agencia}' target='_blank' class='pricing-btn-secondary'>Obtener Plan Agencia</a>
             </div>
             """, unsafe_allow_html=True)
+            
+        # FOOTER / PIE DE PÁGINA
+        st.markdown("<div class='footer'></div>", unsafe_allow_html=True)
+        col_f1, col_f2, col_f3 = st.columns([2, 1, 1])
+        with col_f1:
+            st.markdown("<h3 style='margin-bottom:10px;'>✂️ Tyvidoo</h3><p style='color:#888; font-size:14px; max-width: 300px;'>La inteligencia artificial definitiva para creadores de contenido y podcasters. Multiplica tu alcance en segundos.</p>", unsafe_allow_html=True)
+        with col_f2:
+            st.markdown("<h4 style='font-size:16px;'>Compañía</h4><p style='color:#888; font-size:14px; line-height:2;'>Sobre Nosotros<br>Términos y Privacidad<br>Política de Cookies</p>", unsafe_allow_html=True)
+        with col_f3:
+            st.markdown("<h4 style='font-size:16px;'>Soporte</h4><p style='color:#888; font-size:14px; line-height:2;'>hola@tyvidoo.com<br>Preguntas Frecuentes<br>Guía de uso rápida</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:#555; font-size:12px; margin-top:40px;'>© 2026 Tyvidoo AI. Todos los derechos reservados.</p>", unsafe_allow_html=True)
 
     else:
         st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 900; font-size: 2.5rem;'>Crea tu cuenta gratis</h2><p style='color: #888;'>Accede a tu espacio de trabajo y recibe tus 30 créditos de bienvenida.</p></div>", unsafe_allow_html=True)
@@ -626,21 +626,16 @@ else:
         espacio_animacion = st.empty()
 
         if not st.session_state.mis_clips_data:
-            modo_subida = st.radio("Origen del vídeo", ["🔴 Enlace YouTube", "📁 Archivo Manual"], horizontal=True)
             
-            if modo_subida == "🔴 Enlace YouTube":
-                url_video = st.text_input("", placeholder="🔗 Pega tu enlace de YouTube aquí...", label_visibility="collapsed")
-                btn_crear = st.button("🚀 Procesar YouTube y Crear Clips", type="primary")
-                archivo_subido = None
-            else:
-                archivo_subido = st.file_uploader("📂 Archivo Local", type=["mp4", "mov"], label_visibility="collapsed")
-                btn_crear = st.button("🚀 Procesar Archivo y Crear Clips", type="primary")
-                url_video = None
+            archivo_subido = st.file_uploader("📂 Sube tu archivo de vídeo o podcast (MP4, MOV)", type=["mp4", "mov"])
+            st.write("")
+            btn_crear = st.button("🚀 Procesar Archivo y Crear Clips Mágicos", type="primary")
 
             if btn_crear:
-                if modo_subida == "🔴 Enlace YouTube" and not url_video: st.warning("⚠️ Pega un enlace.")
-                elif modo_subida == "📁 Archivo Manual" and not archivo_subido: st.warning("⚠️ Sube archivo.")
-                elif creditos < cant_clips: st.error("❌ No tienes suficientes créditos para esta petición.")
+                if not archivo_subido: 
+                    st.warning("⚠️ Por favor, sube un archivo primero.")
+                elif creditos < cant_clips: 
+                    st.error("❌ No tienes suficientes créditos para esta petición.")
                 else:
                     st.session_state.mis_clips_data = []
                     st.session_state.aviso_ia = ""
@@ -649,14 +644,12 @@ else:
                         with open(logo_path, "wb") as f: f.write(archivo_logo.getbuffer())
                     
                     try:
-                        if url_video: 
-                            clips_a_renderizar = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
-                        else:
-                            os.makedirs("archivos_brutos", exist_ok=True)
-                            video_guardado_path = os.path.abspath("archivos_brutos/v.mp4")
-                            espacio_animacion.markdown("<h3>📥 Subiendo...</h3>", unsafe_allow_html=True)
-                            with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
-                            clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
+                        os.makedirs("archivos_brutos", exist_ok=True)
+                        video_guardado_path = os.path.abspath("archivos_brutos/v.mp4")
+                        espacio_animacion.markdown("<h3>📥 Subiendo tu vídeo...</h3>", unsafe_allow_html=True)
+                        with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
+                        
+                        clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
                         
                         if len(clips_a_renderizar) > creditos:
                             st.warning(f"⚠️ Has pedido más clips de los créditos que tienes. Solo se generarán los primeros {creditos}.")
