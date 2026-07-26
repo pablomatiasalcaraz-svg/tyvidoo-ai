@@ -34,7 +34,6 @@ def decode_jwt(token):
         parts = token.split('.')
         if len(parts) >= 2:
             payload = parts[1]
-            # Ajuste matemático para que el descifrado jamás falle
             payload += "=" * ((4 - len(payload) % 4) % 4)
             decoded = base64.b64decode(payload).decode('utf-8')
             return json.loads(decoded)
@@ -44,7 +43,7 @@ def decode_jwt(token):
 # --- CONFIGURACIÓN DE PÁGINA Y CSS PREMIUM ---
 st.set_page_config(page_title="Tyvidoo | AI Video Clipping Tool", page_icon="✂️", layout="wide")
 
-# --- EL "CABALLO DE TROYA" PARA GOOGLE (Bypass de seguridad del navegador) ---
+# --- EL "CABALLO DE TROYA" PARA GOOGLE ---
 components.html("""
     <script>
         try {
@@ -86,7 +85,7 @@ if "access_token" in st.query_params:
         pass 
     st.rerun()
 
-# --- ESTILOS VISUALES (INTERFAZ ATRACTIVA RESTAURADA) ---
+# --- ESTILOS VISUALES ATRACTIVOS (NUEVA LANDING) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
@@ -97,66 +96,77 @@ st.markdown("""
     footer {visibility: hidden;}
     .block-container { padding-top: 1rem !important; max-width: 1200px; padding-bottom: 5rem;}
     
-    .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 40px; }
-    .nav-logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #FFFFFF, #AAAAAA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    /* Títulos y Header */
+    .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 50px; }
+    .nav-logo { font-size: 26px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #FFFFFF, #AAAAAA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     
-    .hero-tag { color: #888; font-size: 14px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; }
-    .hero-title { font-size: 4rem; font-weight: 900; line-height: 1.1; letter-spacing: -2px; margin-bottom: 20px; }
-    .hero-subtitle { font-size: 1.2rem; color: #999; font-weight: 400; max-width: 650px; margin: 0 auto 30px auto; line-height: 1.5; text-align: center; }
+    .hero-tag { color: #E94057; font-size: 13px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px; display: inline-block; background: rgba(233, 64, 87, 0.1); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(233, 64, 87, 0.3);}
+    .hero-title { font-size: 4.5rem; font-weight: 900; line-height: 1.1; letter-spacing: -2.5px; margin-bottom: 25px; }
+    .hero-title-gradient { background: linear-gradient(90deg, #8A2387, #E94057, #F27121); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
+    .hero-subtitle { font-size: 1.25rem; color: #A0A0A0; font-weight: 400; max-width: 700px; margin: 0 auto 40px auto; line-height: 1.6; text-align: center; }
     
-    .dash-header { background: linear-gradient(135deg, #151515 0%, #0a0a0a 100%); padding: 40px; border-radius: 20px; border: 1px solid #222; margin-bottom: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    /* Espacio de Trabajo */
+    .dash-header { background: linear-gradient(135deg, #111111 0%, #050505 100%); padding: 40px; border-radius: 24px; border: 1px solid #222; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .dash-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
-    .dash-sub { color: #888; font-size: 1.1rem; }
     
+    /* Tarjetas y Animaciones */
     .glass-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; text-align: center; transition: all 0.3s ease; }
     .glass-card:hover { transform: translateY(-5px); border: 1px solid rgba(255,255,255,0.2); }
 
-    .stButton>button[kind="primary"] { background-color: #ffffff !important; color: #000000 !important; font-weight: 800 !important; border-radius: 12px !important; border: none !important; font-size: 16px !important; padding: 10px 30px !important; width: 100% !important; margin-top: 5px; }
-    .stButton>button[kind="primary"]:hover { transform: translateY(-2px); background-color: #eeeeee !important; }
-    .stButton>button[kind="secondary"] { background-color: transparent !important; color: #fff !important; border: none !important; padding: 0 !important; margin-top: 5px; }
+    .stButton>button[kind="primary"] { background-color: #ffffff !important; color: #000000 !important; font-weight: 800 !important; border-radius: 12px !important; border: none !important; font-size: 16px !important; padding: 12px 30px !important; width: 100% !important; margin-top: 10px; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
+    .stButton>button[kind="primary"]:hover { transform: translateY(-2px) scale(1.02); background-color: #eeeeee !important; }
+    
+    .stButton>button[kind="secondary"] { background-color: rgba(255,255,255,0.05) !important; color: #fff !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 12px !important; border-radius: 12px !important; transition: all 0.2s; }
+    .stButton>button[kind="secondary"]:hover { background-color: rgba(255,255,255,0.1) !important; transform: translateY(-2px);}
+    
     .stDownloadButton>button { background-color: #222222 !important; color: #ffffff !important; font-weight: 600 !important; border-radius: 8px !important; border: 1px solid #444 !important; }
     .stDownloadButton>button:hover { background-color: #333333 !important; border: 1px solid #666 !important;}
     
-    .stTabs [data-baseweb="tab-list"] { gap: 24px; }
-    .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: transparent; border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px; font-weight: 600; font-size: 16px; }
-    .stTabs [aria-selected="true"] { color: #ffffff !important; border-bottom: 2px solid #ffffff !important; }
+    .stTabs [data-baseweb="tab-list"] { gap: 24px; justify-content: center; }
+    .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: transparent; border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px; font-weight: 600; font-size: 16px; color: #888;}
+    .stTabs [aria-selected="true"] { color: #ffffff !important; border-bottom: 2px solid #E94057 !important; }
     
-    .marquee-wrapper { overflow: hidden; white-space: nowrap; margin-top: 40px; padding: 20px 0; border-top: 1px solid #111; border-bottom: 1px solid #111;}
-    .marquee-content { display: inline-block; animation: marquee 25s linear infinite; }
-    .review-card { display: inline-block; background: rgba(255,255,255,0.03); padding: 15px 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05); margin-right: 20px; font-size: 14px; color: #ccc; }
+    /* Carrusel de reseñas */
+    .marquee-wrapper { overflow: hidden; white-space: nowrap; margin-top: 60px; padding: 30px 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); background: linear-gradient(90deg, #050505 0%, rgba(255,255,255,0.02) 50%, #050505 100%); }
+    .marquee-content { display: inline-block; animation: marquee 30s linear infinite; }
+    .review-card { display: inline-block; background: rgba(0,0,0,0.5); padding: 15px 30px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); margin-right: 25px; font-size: 15px; color: #bbb; backdrop-filter: blur(10px); }
     .review-card b { color: #fff; }
     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-    .section-title { font-size: 2.5rem; font-weight: 800; text-align: center; margin: 80px 0 20px 0; letter-spacing: -1px; }
-    .section-subtitle { text-align: center; color: #888; margin-bottom: 40px; font-size: 1.1rem; }
+    /* Estilos de Precios / Pricing */
+    .section-title { font-size: 3rem; font-weight: 900; text-align: center; margin: 100px 0 20px 0; letter-spacing: -1.5px; }
+    .section-subtitle { text-align: center; color: #888; margin-bottom: 50px; font-size: 1.2rem; max-width: 600px; margin-left: auto; margin-right: auto;}
     
-    .feature-card, .info-card { background: #0a0a0a; border: 1px solid #222; border-radius: 20px; padding: 30px; height: 100%; }
-    .pricing-card { background: #0a0a0a; border: 1px solid #222; border-radius: 20px; padding: 40px 30px; text-align: center; position: relative; height: 100%; }
-    .pricing-card.pro { border: 2px solid #ffffff; background: linear-gradient(180deg, #111 0%, #050505 100%); transform: scale(1.05); z-index: 10;}
-    .badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #fff; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-    .price { font-size: 3rem; font-weight: 900; margin: 20px 0; }
-    .price span { font-size: 1rem; color: #666; font-weight: normal; }
-    .pricing-features { text-align: left; margin: 30px 0; color: #aaa; font-size: 14px; line-height: 2; }
-    .video-mockup { background: #111; border-radius: 20px; padding: 10px; border: 1px solid #333; text-align: center; }
-    .video-mockup img { border-radius: 10px; width: 100%; object-fit: cover; aspect-ratio: 9/16; opacity: 0.8;}
+    .pricing-card { background: #0A0A0A; border: 1px solid #222; border-radius: 24px; padding: 40px 30px; text-align: center; position: relative; height: 100%; transition: transform 0.3s; }
+    .pricing-card:hover { transform: translateY(-5px); border-color: #444; }
     
-    .clip-preview-container { border: 1px solid #333; border-radius: 10px; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,0.02); }
+    .pricing-card.pro { border: 2px solid #E94057; background: linear-gradient(180deg, #110508 0%, #0A0A0A 100%); transform: scale(1.05); z-index: 10; box-shadow: 0 10px 40px rgba(233, 64, 87, 0.2); }
+    .pricing-card.pro:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 15px 50px rgba(233, 64, 87, 0.3); }
     
-    /* Botón Premium de Google con SVG Oficial */
+    .badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #E94057, #F27121); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(233,64,87,0.4);}
+    .price { font-size: 3.5rem; font-weight: 900; margin: 20px 0; color: #fff; }
+    .price span { font-size: 1.1rem; color: #666; font-weight: 500; }
+    .pricing-features { text-align: left; margin: 30px 0 40px 0; color: #ccc; font-size: 15px; line-height: 2.2; }
+    
+    .video-mockup { background: #111; border-radius: 24px; padding: 12px; border: 1px solid #333; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+    .video-mockup img { border-radius: 14px; width: 100%; object-fit: cover; aspect-ratio: 9/16; opacity: 0.9; transition: opacity 0.3s; }
+    .video-mockup:hover img { opacity: 1; }
+    
+    /* Botón Premium de Google */
     .google-custom-btn {
-        display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #1f2937;
-        font-weight: 600; font-size: 16px; font-family: 'Inter', sans-serif; border-radius: 12px; padding: 12px 24px;
-        text-decoration: none; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        transition: background-color 0.2s, transform 0.1s; width: 100%; box-sizing: border-box; margin-top: 15px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #111;
+        font-weight: 700; font-size: 16px; border-radius: 14px; padding: 14px 24px;
+        text-decoration: none; border: none; box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+        transition: all 0.2s ease; width: 100%; margin-top: 15px; cursor: pointer;
     }
-    .google-custom-btn:hover { background-color: #f9fafb; transform: translateY(-1px); }
-    .google-custom-btn svg { width: 20px; height: 20px; margin-right: 12px; }
+    .google-custom-btn:hover { background-color: #f1f1f1; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,255,255,0.15); }
+    .google-custom-btn svg { width: 22px; height: 22px; margin-right: 12px; }
     
-    /* Enlaces estilo Botón para Pricing */
-    .pricing-btn-primary { display:block; text-align:center; width:100%; padding:15px; border-radius:10px; background:white; border:none; color:black; font-weight:bold; text-decoration:none; transition: transform 0.2s; }
-    .pricing-btn-primary:hover { transform: scale(1.02); }
-    .pricing-btn-secondary { display:block; text-align:center; width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white; text-decoration:none; transition: background 0.2s; }
-    .pricing-btn-secondary:hover { background: rgba(255,255,255,0.1); }
+    /* Botones de Pago */
+    .pricing-btn-primary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background: linear-gradient(90deg, #E94057, #F27121); border:none; color:white !important; font-weight:800; text-decoration:none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(233,64,87,0.3); }
+    .pricing-btn-primary:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(233,64,87,0.5); }
+    .pricing-btn-secondary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background:transparent; border:1px solid #555; color:white !important; text-decoration:none; font-weight: 600; transition: background 0.2s; }
+    .pricing-btn-secondary:hover { background: rgba(255,255,255,0.05); border-color: #888; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -374,56 +384,59 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
 # ==========================================
 if not st.session_state.logged_in:
     col_logo, col_space, col_login = st.columns([2, 5, 1])
-    with col_logo: st.markdown("<div class='top-nav'><div class='nav-logo'>✂️ Tyvidoo AI</div></div>", unsafe_allow_html=True)
+    with col_logo: st.markdown("<div class='top-nav'><div class='nav-logo'>✂️ Tyvidoo</div></div>", unsafe_allow_html=True)
     with col_login:
         st.write("")
-        if st.button("Sign In", use_container_width=True):
+        if st.button("Iniciar Sesión", use_container_width=True, type="secondary"):
             st.session_state.show_auth = True
             st.rerun()
 
     if not st.session_state.show_auth:
         st.markdown("""
-        <div style='text-align: center; margin-top: 20px;'>
-            <p class='hero-tag'>#1 AI VIDEO CLIPPING TOOL</p>
-            <h1 class='hero-title'>De 1 vídeo largo a 10 clips virales.<br>Automáticamente.</h1>
-            <p class='hero-subtitle'>Tyvidoo convierte tus vídeos y podcasts en Shorts listos para publicar, con la IA buscando los mejores momentos y añadiendo subtítulos estilo Hormozi.</p>
+        <div style='text-align: center; margin-top: 40px;'>
+            <div class='hero-tag'>INTELIGENCIA ARTIFICIAL PARA CREADORES</div>
+            <h1 class='hero-title'>Multiplica tu audiencia.<br><span class='hero-title-gradient'>Sin multiplicar tu trabajo.</span></h1>
+            <p class='hero-subtitle'>Tyvidoo analiza tus vídeos largos y podcasts para extraer los momentos más virales, añadiendo subtítulos dinámicos estilo Hormozi de forma 100% automática.</p>
         </div>
         """, unsafe_allow_html=True)
 
-        col_pad1, col_center, col_pad2 = st.columns([1, 8, 1])
+        col_pad1, col_center, col_pad2 = st.columns([2, 6, 2])
         with col_center:
-            st.markdown("<div style='background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.2); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 20px;'>", unsafe_allow_html=True)
-            st.markdown("<h3>Empieza a crear</h3>", unsafe_allow_html=True)
+            st.markdown("<div style='background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);'>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin-bottom: 20px;'>Pruébalo ahora mismo 👇</h3>", unsafe_allow_html=True)
             
-            tab1, tab2 = st.tabs(["🔴 Pegar enlace de YouTube", "📁 Subir Archivo Manual"])
-            with tab1: st.text_input("YouTube URL", placeholder="🔗 https://www.youtube.com/watch?v=...", label_visibility="collapsed")
+            tab1, tab2 = st.tabs(["🔴 Enlace de YouTube", "📁 Archivo Local"])
+            with tab1: st.text_input("YouTube URL", placeholder="🔗 Pega aquí un enlace de YouTube...", label_visibility="collapsed")
             with tab2: st.file_uploader("Subir Archivo", type=["mp4", "mov"], label_visibility="collapsed")
             
             st.markdown("</div>", unsafe_allow_html=True)
             
-            if st.button("🚀 Iniciar Sesión y Generar Clips", type="primary", use_container_width=True):
+            if st.button("🚀 Generar mis primeros Clips Mágicos", type="primary", use_container_width=True):
                 st.session_state.show_auth = True
                 st.rerun()
 
         m_1 = "<div class='marquee-wrapper'><div class='marquee-content'>"
-        m_2 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Uso el plan gratis comprimiendo mis podcasts. Es brutal\" - <b>@creador_es</b></div>"
-        m_3 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mis vistas en TikTok se multiplicaron x5\" - <b>@marketing_pro</b></div>"
-        m_4 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Subtítulos estilo Hormozi automáticos. Magia.\" - <b>@podcast_latam</b></div>"
-        m_5 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mucho más rápido que otras herramientas caras.\" - <b>@streamer_xd</b></div>"
+        m_2 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Ahorro unas 10 horas de edición a la semana. Brutal.\" - <b>@creador_es</b></div>"
+        m_3 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mis vistas en TikTok se multiplicaron x5 en un mes.\" - <b>@marketing_pro</b></div>"
+        m_4 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Los subtítulos automáticos son magia pura.\" - <b>@podcast_latam</b></div>"
+        m_5 = "<div class='review-card'>⭐⭐⭐⭐⭐ \"Mucho más intuitivo y rápido que Premiere.\" - <b>@streamer_xd</b></div>"
         m_6 = m_2 + m_3 + m_4 + m_5 + "</div></div>"
         st.markdown(m_1 + m_2 + m_3 + m_4 + m_5 + m_6, unsafe_allow_html=True)
 
-        st.markdown("<div class='section-title'>Resultados de calidad profesional 🎬</div>", unsafe_allow_html=True)
+        st.markdown("<h2 class='section-title'>Calidad profesional <span style='color:#E94057;'>en segundos</span></h2>", unsafe_allow_html=True)
+        st.markdown("<p class='section-subtitle'>Elige entre nuestras plantillas optimizadas para retener la atención de la audiencia en TikTok, Reels y Shorts.</p>", unsafe_allow_html=True)
+        
         c_vid1, c_vid2, c_vid3 = st.columns(3)
         with c_vid1: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Hormozi 💛</h4></div>", unsafe_allow_html=True)
         with c_vid2: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Podcast 🎙️</h4></div>", unsafe_allow_html=True)
         with c_vid3: st.markdown(f"<div class='video-mockup'><img src='https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=700&q=80'><h4 style='margin-top:15px;'>Estilo Neón 👾</h4></div>", unsafe_allow_html=True)
 
-        st.markdown("<div class='section-title'>Planes simples y transparentes 💳</div>", unsafe_allow_html=True)
-        col_tog1, col_tog2, col_tog3 = st.columns([3, 2, 3])
+        st.markdown("<h2 class='section-title'>Planes simples y <span style='color:#F27121;'>transparentes</span></h2>", unsafe_allow_html=True)
+        
+        col_tog1, col_tog2, col_tog3 = st.columns([3, 3, 3])
         with col_tog2:
             st.markdown("<div style='margin-bottom: 40px; text-align: center;'>", unsafe_allow_html=True)
-            facturacion_anual = st.toggle("Facturación Anual (Ahorra 50%)", value=True)
+            facturacion_anual = st.toggle("Ahorra un 50% con el Plan Anual 🎁", value=True)
             st.markdown("</div>", unsafe_allow_html=True)
             
         precio_pro = "9" if facturacion_anual else "19"
@@ -437,34 +450,37 @@ if not st.session_state.logged_in:
         p_col1, p_col2, p_col3 = st.columns(3)
         with p_col1:
             st.markdown(f"""
-            <div class='pricing-card'>
-                <h3>Starter Gratuito</h3><div class='price'>$0<span>/mes</span></div>
-                <div class='pricing-features'>✔️ <b>30 créditos gratis</b><br>✔️ Exportación a 720p<br>✔️ Enlaces de YouTube<br>❌ Límite de subida</div>
-                <button style="width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white;">Empezar Gratis</button>
+            <div class='pricing-card' style='margin-bottom: 15px;'>
+                <h3 style='color: #fff;'>Starter Gratuito</h3><div class='price'>$0<span>/mes</span></div>
+                <div class='pricing-features'>✔️ <b>30 créditos de regalo</b><br>✔️ Exportación a 720p<br>✔️ Enlaces de YouTube<br>❌ Límite de tamaño</div>
             </div>
             """, unsafe_allow_html=True)
+            # AHORA EL BOTÓN GRATIS FUNCIONA PERFECTAMENTE
+            if st.button("🎁 Crear cuenta gratis", use_container_width=True):
+                st.session_state.show_auth = True
+                st.rerun()
         
         with p_col2:
             st.markdown(f"""
             <div class='pricing-card pro'>
                 <div class='badge'>MÁS POPULAR</div>
-                <h3>Creator Pro</h3><div class='price'>${precio_pro}<span>{texto_mes}</span></div>
+                <h3 style='color: #fff;'>Creator Pro</h3><div class='price'>${precio_pro}<span>{texto_mes}</span></div>
                 <div class='pricing-features'>✔️ <b>200 minutos al mes</b><br>✔️ <b>Sin límite de tamaño</b><br>✔️ Exportación 1080p HD<br>✔️ Sin marca de agua</div>
-                <a href='{link_pro}' target='_blank' class='pricing-btn-primary'>Elegir Pro</a>
+                <a href='{link_pro}' target='_blank' class='pricing-btn-primary'>Empezar como Pro</a>
             </div>
             """, unsafe_allow_html=True)
 
         with p_col3:
             st.markdown(f"""
             <div class='pricing-card'>
-                <h3>Agencia</h3><div class='price'>${precio_agencia}<span>{texto_mes}</span></div>
+                <h3 style='color: #fff;'>Agencia</h3><div class='price'>${precio_agencia}<span>{texto_mes}</span></div>
                 <div class='pricing-features'>✔️ <b>1000 minutos al mes</b><br>✔️ Todos los beneficios Pro<br>✔️ Acceso a la API<br>✔️ Soporte prioritario 24/7</div>
-                <a href='{link_agencia}' target='_blank' class='pricing-btn-secondary'>Contactar Ventas</a>
+                <a href='{link_agencia}' target='_blank' class='pricing-btn-secondary'>Obtener Plan Agencia</a>
             </div>
             """, unsafe_allow_html=True)
 
     else:
-        st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 800;'>Comienza a crear</h2></div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 900; font-size: 2.5rem;'>Crea tu cuenta gratis</h2><p style='color: #888;'>Accede a tu espacio de trabajo y recibe tus 30 créditos de bienvenida.</p></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             url_oauth_google = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=https://aware-mercy-production-e677.up.railway.app"
@@ -480,28 +496,29 @@ if not st.session_state.logged_in:
                 </a>
             """, unsafe_allow_html=True)
             
-            st.markdown("<p style='text-align:center; margin:20px 0; color:#555;'>— O CON TU CORREO —</p>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align:center; margin:25px 0; color:#555; font-size: 14px;'>— O USA TU CORREO —</p>", unsafe_allow_html=True)
             
             tab1, tab2 = st.tabs(["📝 Registrarse", "🔐 Iniciar Sesión"])
             with tab1:
                 with st.form("reg_form"):
                     e_reg = st.text_input("Correo")
                     p_reg = st.text_input("Contraseña", type="password")
-                    if st.form_submit_button("Crear cuenta", type="primary", use_container_width=True):
+                    if st.form_submit_button("Crear mi cuenta", type="primary", use_container_width=True):
                         exito, msj = registrar_usuario(e_reg, p_reg)
-                        if exito: st.success("✅ Creada. Inicia sesión.")
+                        if exito: st.success("✅ Cuenta creada. Inicia sesión para empezar.")
                         else: st.error(f"⚠️ Error: {msj}")
             with tab2:
                 with st.form("log_form"):
                     e_log = st.text_input("Correo")
                     p_log = st.text_input("Contraseña", type="password")
-                    if st.form_submit_button("Entrar", type="primary", use_container_width=True):
+                    if st.form_submit_button("Entrar a mi panel", type="primary", use_container_width=True):
                         if login_usuario(e_log, p_log):
                             st.session_state.logged_in = True
                             st.session_state.user_email = e_log.lower().strip()
                             st.session_state.show_auth = False
                             st.rerun()
-                        else: st.error("❌ Datos incorrectos.")
+                        else: st.error("❌ Correo o contraseña incorrectos.")
+            st.write("")
             if st.button("← Volver al Inicio", use_container_width=True):
                 st.session_state.show_auth = False
                 st.rerun()
@@ -515,11 +532,10 @@ else:
     with st.sidebar:
         st.markdown("<h2 style='font-weight:900;'>✂️ Tyvidoo</h2>", unsafe_allow_html=True)
         st.caption(st.session_state.user_email)
-        st.markdown(f"<div style='background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 15px; text-align: center; margin: 20px 0;'><h2 style='margin:0; font-weight: 800;'>{creditos} <span style='font-size: 14px; color: #888;'>créditos</span></h2></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);'><h2 style='margin:0; font-weight: 900; color: #fff;'>{creditos}</h2><span style='font-size: 13px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;'>créditos restantes</span></div>", unsafe_allow_html=True)
         
-        # BOTÓN DE RECARGA INTERNO EN EL PANEL (Pasa el correo del usuario por la URL)
         link_recarga = f"https://buy.stripe.com/7sY3co2bLaR62P93O16wE02?client_reference_id={st.session_state.user_email}"
-        st.markdown(f"<a href='{link_recarga}' target='_blank' class='google-custom-btn' style='background:#635BFF; color:white; border:none; margin-bottom: 20px;'>💳 Recargar (19€)</a>", unsafe_allow_html=True)
+        st.markdown(f"<a href='{link_recarga}' target='_blank' style='display:block; text-align:center; width:100%; padding:12px; border-radius:10px; background: linear-gradient(90deg, #8A2387, #E94057); border:none; color:white; font-weight:bold; text-decoration:none; margin-bottom: 25px;'>⚡ Recargar Créditos</a>", unsafe_allow_html=True)
         
         menu_principal = st.radio("Menú", ["✂️ Crear Clips", "📚 Mi Biblioteca"], label_visibility="collapsed")
         st.divider()
@@ -533,9 +549,9 @@ else:
             st.markdown("<b>🎨 Elige tu Diseño Final</b>", unsafe_allow_html=True)
             
             col_p1, col_p2, col_p3 = st.columns(3)
-            b1 = "2px solid #fff" if st.session_state.plantilla == "Hormozi 💛" else "1px solid #333"
-            b2 = "2px solid #fff" if st.session_state.plantilla == "Podcast 🎙️" else "1px solid #333"
-            b3 = "2px solid #fff" if st.session_state.plantilla == "Neón 👾" else "1px solid #333"
+            b1 = "2px solid #E94057" if st.session_state.plantilla == "Hormozi 💛" else "1px solid #333"
+            b2 = "2px solid #E94057" if st.session_state.plantilla == "Podcast 🎙️" else "1px solid #333"
+            b3 = "2px solid #E94057" if st.session_state.plantilla == "Neón 👾" else "1px solid #333"
             
             with col_p1:
                 st.markdown(f"""<div style='border: {b1}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05); cursor:pointer;'>
@@ -545,7 +561,7 @@ else:
                         <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: yellow; font-family: Impact, sans-serif; font-size: 10px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>TEXTO CLAVE</div>
                     </div>
                 </div>""", unsafe_allow_html=True)
-                if st.button("💛 Hormozi", use_container_width=True): st.session_state.plantilla = "Hormozi 💛"; st.rerun()
+                if st.button("💛 Horm", use_container_width=True): st.session_state.plantilla = "Hormozi 💛"; st.rerun()
 
             with col_p2:
                 st.markdown(f"""<div style='border: {b2}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
@@ -555,7 +571,7 @@ else:
                         <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: white; font-family: Arial, sans-serif; font-size: 9px; font-weight: bold; text-shadow: 1px 1px 2px #000;'>Podcast</div>
                     </div>
                 </div>""", unsafe_allow_html=True)
-                if st.button("🎙️ Podcast", use_container_width=True): st.session_state.plantilla = "Podcast 🎙️"; st.rerun()
+                if st.button("🎙️ Pod", use_container_width=True): st.session_state.plantilla = "Podcast 🎙️"; st.rerun()
 
             with col_p3:
                 st.markdown(f"""<div style='border: {b3}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
@@ -585,7 +601,7 @@ else:
                 st.session_state.show_delete_confirm = True
                 st.rerun()
         else:
-            st.warning("⚠️ Perderás todos tus créditos y clips. ¿Seguro?")
+            st.warning("⚠️ Perderás tus créditos. ¿Seguro?")
             col_yes, col_no = st.columns(2)
             with col_yes:
                 if st.button("Sí, borrar", type="primary", use_container_width=True):
@@ -596,8 +612,7 @@ else:
                     st.session_state.logged_in = False
                     st.session_state.user_email = ""
                     st.session_state.show_delete_confirm = False
-                    try:
-                        st.query_params.clear()
+                    try: st.query_params.clear()
                     except: pass
                     st.rerun()
             with col_no:
@@ -608,8 +623,7 @@ else:
         if st.button("🚪 Cerrar Sesión", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.user_email = ""
-            try:
-                st.query_params.clear()
+            try: st.query_params.clear()
             except: pass
             st.rerun()
 
@@ -670,9 +684,7 @@ else:
                                         nombre_nube = f"clip_{int(time.time())}_{i}.mp4"
                                         with open(r, "rb") as f:
                                             supabase.storage.from_("clips").upload(nombre_nube, f.read(), {"content-type": "video/mp4"})
-                                        
                                         url_nube = supabase.storage.from_("clips").get_public_url(nombre_nube)
-                                        
                                         supabase.table("historial_clips").insert({
                                             "email_usuario": st.session_state.user_email,
                                             "titulo_clip": cl["titulo"],
