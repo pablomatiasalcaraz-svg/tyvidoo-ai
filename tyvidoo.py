@@ -85,7 +85,7 @@ if "access_token" in st.query_params:
         pass 
     st.rerun()
 
-# --- ESTILOS VISUALES ATRACTIVOS (NUEVA LANDING) ---
+# --- ESTILOS VISUALES ATRACTIVOS ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
@@ -96,7 +96,6 @@ st.markdown("""
     footer {visibility: hidden;}
     .block-container { padding-top: 1rem !important; max-width: 1200px; padding-bottom: 5rem;}
     
-    /* Títulos y Header */
     .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 50px; }
     .nav-logo { font-size: 26px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #FFFFFF, #AAAAAA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     
@@ -105,11 +104,9 @@ st.markdown("""
     .hero-title-gradient { background: linear-gradient(90deg, #8A2387, #E94057, #F27121); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
     .hero-subtitle { font-size: 1.25rem; color: #A0A0A0; font-weight: 400; max-width: 700px; margin: 0 auto 40px auto; line-height: 1.6; text-align: center; }
     
-    /* Espacio de Trabajo */
     .dash-header { background: linear-gradient(135deg, #111111 0%, #050505 100%); padding: 40px; border-radius: 24px; border: 1px solid #222; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .dash-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
     
-    /* Tarjetas y Animaciones */
     .glass-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; text-align: center; transition: all 0.3s ease; }
     .glass-card:hover { transform: translateY(-5px); border: 1px solid rgba(255,255,255,0.2); }
 
@@ -126,14 +123,12 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: transparent; border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px; font-weight: 600; font-size: 16px; color: #888;}
     .stTabs [aria-selected="true"] { color: #ffffff !important; border-bottom: 2px solid #E94057 !important; }
     
-    /* Carrusel de reseñas */
     .marquee-wrapper { overflow: hidden; white-space: nowrap; margin-top: 60px; padding: 30px 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); background: linear-gradient(90deg, #050505 0%, rgba(255,255,255,0.02) 50%, #050505 100%); }
     .marquee-content { display: inline-block; animation: marquee 30s linear infinite; }
     .review-card { display: inline-block; background: rgba(0,0,0,0.5); padding: 15px 30px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); margin-right: 25px; font-size: 15px; color: #bbb; backdrop-filter: blur(10px); }
     .review-card b { color: #fff; }
     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-    /* Estilos de Precios / Pricing */
     .section-title { font-size: 3rem; font-weight: 900; text-align: center; margin: 100px 0 20px 0; letter-spacing: -1.5px; }
     .section-subtitle { text-align: center; color: #888; margin-bottom: 50px; font-size: 1.2rem; max-width: 600px; margin-left: auto; margin-right: auto;}
     
@@ -152,7 +147,6 @@ st.markdown("""
     .video-mockup img { border-radius: 14px; width: 100%; object-fit: cover; aspect-ratio: 9/16; opacity: 0.9; transition: opacity 0.3s; }
     .video-mockup:hover img { opacity: 1; }
     
-    /* Botón Premium de Google */
     .google-custom-btn {
         display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #111;
         font-weight: 700; font-size: 16px; border-radius: 14px; padding: 14px 24px;
@@ -162,7 +156,6 @@ st.markdown("""
     .google-custom-btn:hover { background-color: #f1f1f1; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,255,255,0.15); }
     .google-custom-btn svg { width: 22px; height: 22px; margin-right: 12px; }
     
-    /* Botones de Pago */
     .pricing-btn-primary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background: linear-gradient(90deg, #E94057, #F27121); border:none; color:white !important; font-weight:800; text-decoration:none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(233,64,87,0.3); }
     .pricing-btn-primary:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(233,64,87,0.5); }
     .pricing-btn-secondary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background:transparent; border:1px solid #555; color:white !important; text-decoration:none; font-weight: 600; transition: background 0.2s; }
@@ -455,7 +448,6 @@ if not st.session_state.logged_in:
                 <div class='pricing-features'>✔️ <b>30 créditos de regalo</b><br>✔️ Exportación a 720p<br>✔️ Enlaces de YouTube<br>❌ Límite de tamaño</div>
             </div>
             """, unsafe_allow_html=True)
-            # AHORA EL BOTÓN GRATIS FUNCIONA PERFECTAMENTE
             if st.button("🎁 Crear cuenta gratis", use_container_width=True):
                 st.session_state.show_auth = True
                 st.rerun()
@@ -592,39 +584,32 @@ else:
             st.divider()
             archivo_logo = st.file_uploader("Marca de Agua (PNG)", type=["png"])
             
-            st.divider()
-            modo_prueba = st.toggle("🧪 Modo Desarrollador (1 min)", value=False)
-            
         st.divider()
         if not st.session_state.get("show_delete_confirm", False):
-            if st.button("🗑️ Eliminar mi cuenta", use_container_width=True):
+            if st.button("🗑️ Eliminar mi cuenta", use_container_width=True, key="btn_del"):
                 st.session_state.show_delete_confirm = True
                 st.rerun()
         else:
             st.warning("⚠️ Perderás tus créditos. ¿Seguro?")
             col_yes, col_no = st.columns(2)
             with col_yes:
-                if st.button("Sí, borrar", type="primary", use_container_width=True):
+                if st.button("Sí, borrar", type="primary", use_container_width=True, key="btn_yes"):
                     try:
                         supabase.table("historial_clips").delete().eq("email_usuario", st.session_state.user_email).execute()
                         supabase.table("usuarios").delete().eq("email", st.session_state.user_email).execute()
                     except: pass
-                    st.session_state.logged_in = False
-                    st.session_state.user_email = ""
-                    st.session_state.show_delete_confirm = False
-                    try: st.query_params.clear()
-                    except: pass
+                    
+                    for key in list(st.session_state.keys()):
+                        del st.session_state[key]
                     st.rerun()
             with col_no:
-                if st.button("Cancelar", use_container_width=True):
+                if st.button("Cancelar", use_container_width=True, key="btn_no"):
                     st.session_state.show_delete_confirm = False
                     st.rerun()
 
-        if st.button("🚪 Cerrar Sesión", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.user_email = ""
-            try: st.query_params.clear()
-            except: pass
+        if st.button("🚪 Cerrar Sesión", use_container_width=True, key="btn_logout"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
             st.rerun()
 
     # --- PANTALLA PRINCIPAL ---
@@ -661,13 +646,13 @@ else:
                     
                     try:
                         if url_video: 
-                            clips_a_renderizar = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
+                            clips_a_renderizar = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, False)
                         else:
                             os.makedirs("archivos_brutos", exist_ok=True)
                             video_guardado_path = os.path.abspath("archivos_brutos/v.mp4")
                             espacio_animacion.markdown("<h3>📥 Subiendo...</h3>", unsafe_allow_html=True)
                             with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
-                            clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, modo_prueba)
+                            clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, False)
                         
                         if len(clips_a_renderizar) > creditos:
                             st.warning(f"⚠️ Has pedido más clips de los créditos que tienes. Solo se generarán los primeros {creditos}.")
