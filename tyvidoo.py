@@ -175,6 +175,30 @@ if "show_auth" not in st.session_state: st.session_state.show_auth = False
 if "aviso_ia" not in st.session_state: st.session_state.aviso_ia = ""
 if "show_delete_confirm" not in st.session_state: st.session_state.show_delete_confirm = False
 
+# --- FUNCIONES DE CALLBACK PARA BOTONES A PRUEBA DE FALLOS ---
+def logout_action():
+    st.session_state.logged_in = False
+    st.session_state.user_email = ""
+    st.session_state.show_auth = False
+    st.session_state.show_delete_confirm = False
+    st.session_state.mis_clips_data = []
+    try:
+        st.query_params.clear()
+    except: pass
+
+def confirm_delete_action():
+    st.session_state.show_delete_confirm = True
+
+def cancel_delete_action():
+    st.session_state.show_delete_confirm = False
+
+def execute_delete_action():
+    try:
+        supabase.table("historial_clips").delete().eq("email_usuario", st.session_state.user_email).execute()
+        supabase.table("usuarios").delete().eq("email", st.session_state.user_email).execute()
+    except: pass
+    logout_action()
+
 # --- FUNCIONES DE BASE DE DATOS ---
 def registrar_usuario(email, password):
     email = email.lower().strip()
@@ -232,7 +256,7 @@ def generar_srt_por_palabras(res, ini, fin, srt):
                     f.write(f"{c}\n{segundos_a_srt(start_aj)} --> {segundos_a_srt(end_aj)}\n{palabra}\n\n")
                     c += 1
 
-def procesar_video_youtube(url, cant, d_min, d_max, prog, modo_prueba=False):
+def procesar_video_youtube(url, cant, d_min, d_max, prog):
     for d in ["archivos_brutos", "clips_finales"]:
         os.makedirs(d, exist_ok=True)
         for a in os.listdir(d): 
@@ -253,14 +277,12 @@ def procesar_video_youtube(url, cant, d_min, d_max, prog, modo_prueba=False):
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl: ydl.download([url])
     
-    cmd_audio = ["ffmpeg", "-y", "-i", v]
-    if modo_prueba: cmd_audio.extend(["-t", "60"])
-    cmd_audio.extend(["-b:a", "32k", "-map", "a", a])
+    cmd_audio = ["ffmpeg", "-y", "-i", v, "-b:a", "32k", "-map", "a", a]
     subprocess.run(cmd_audio, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     
     return procesar_ia(a, v, cant, d_min, d_max, prog)
 
-def procesar_video_local(archivo_path, cant, d_min, d_max, prog, modo_prueba=False):
+def procesar_video_local(archivo_path, cant, d_min, d_max, prog):
     for d in ["archivos_brutos", "clips_finales"]:
         os.makedirs(d, exist_ok=True)
         for archivo in os.listdir(d): 
@@ -270,9 +292,7 @@ def procesar_video_local(archivo_path, cant, d_min, d_max, prog, modo_prueba=Fal
     a = os.path.abspath("archivos_brutos/a.mp3")
     prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎵 Extrayendo audio...</h3></div>", unsafe_allow_html=True)
     
-    cmd_audio = ["ffmpeg", "-y", "-i", archivo_path]
-    if modo_prueba: cmd_audio.extend(["-t", "60"])
-    cmd_audio.extend(["-b:a", "32k", "-map", "a", a])
+    cmd_audio = ["ffmpeg", "-y", "-i", archivo_path, "-b:a", "32k", "-map", "a", a]
     subprocess.run(cmd_audio, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     
     return procesar_ia(a, archivo_path, cant, d_min, d_max, prog)
@@ -436,7 +456,6 @@ if not st.session_state.logged_in:
         precio_agencia = "24" if facturacion_anual else "49"
         texto_mes = "/mes (cobrado anualmente)" if facturacion_anual else "/mes"
         
-        # ASIGNACIÓN DE ENLACES DE PAGO STRIPE
         link_pro = "https://buy.stripe.com/fZueV67w5gbqexRckx6wE04" if facturacion_anual else "https://buy.stripe.com/7sY3co2bLaR62P93O16wE02"
         link_agencia = "https://buy.stripe.com/4gM00ceYx6AQ75p2JX6wE03" if facturacion_anual else "https://buy.stripe.com/28EaEQ3fP2kAdtN5W96wE01"
 
@@ -586,31 +605,16 @@ else:
             
         st.divider()
         if not st.session_state.get("show_delete_confirm", False):
-            if st.button("🗑️ Eliminar mi cuenta", use_container_width=True, key="btn_del"):
-                st.session_state.show_delete_confirm = True
-                st.rerun()
+            st.button("🗑️ Eliminar mi cuenta", use_container_width=True, on_click=confirm_delete_action)
         else:
             st.warning("⚠️ Perderás tus créditos. ¿Seguro?")
             col_yes, col_no = st.columns(2)
             with col_yes:
-                if st.button("Sí, borrar", type="primary", use_container_width=True, key="btn_yes"):
-                    try:
-                        supabase.table("historial_clips").delete().eq("email_usuario", st.session_state.user_email).execute()
-                        supabase.table("usuarios").delete().eq("email", st.session_state.user_email).execute()
-                    except: pass
-                    
-                    for key in list(st.session_state.keys()):
-                        del st.session_state[key]
-                    st.rerun()
+                st.button("Sí, borrar", type="primary", use_container_width=True, on_click=execute_delete_action)
             with col_no:
-                if st.button("Cancelar", use_container_width=True, key="btn_no"):
-                    st.session_state.show_delete_confirm = False
-                    st.rerun()
+                st.button("Cancelar", use_container_width=True, on_click=cancel_delete_action)
 
-        if st.button("🚪 Cerrar Sesión", use_container_width=True, key="btn_logout"):
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
-            st.rerun()
+        st.button("🚪 Cerrar Sesión", use_container_width=True, on_click=logout_action)
 
     # --- PANTALLA PRINCIPAL ---
     st.markdown("<div class='dash-header'><div class='dash-title'>✂️ Espacio de Trabajo</div></div>", unsafe_allow_html=True)
@@ -646,13 +650,13 @@ else:
                     
                     try:
                         if url_video: 
-                            clips_a_renderizar = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, False)
+                            clips_a_renderizar = procesar_video_youtube(url_video, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
                         else:
                             os.makedirs("archivos_brutos", exist_ok=True)
                             video_guardado_path = os.path.abspath("archivos_brutos/v.mp4")
                             espacio_animacion.markdown("<h3>📥 Subiendo...</h3>", unsafe_allow_html=True)
                             with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
-                            clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion, False)
+                            clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
                         
                         if len(clips_a_renderizar) > creditos:
                             st.warning(f"⚠️ Has pedido más clips de los créditos que tienes. Solo se generarán los primeros {creditos}.")
