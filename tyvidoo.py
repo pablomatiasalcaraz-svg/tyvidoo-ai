@@ -34,6 +34,7 @@ def decode_jwt(token):
         parts = token.split('.')
         if len(parts) >= 2:
             payload = parts[1]
+            # Ajuste matemático para que el descifrado jamás falle
             payload += "=" * ((4 - len(payload) % 4) % 4)
             decoded = base64.b64decode(payload).decode('utf-8')
             return json.loads(decoded)
@@ -43,7 +44,7 @@ def decode_jwt(token):
 # --- CONFIGURACIÓN DE PÁGINA Y CSS PREMIUM ---
 st.set_page_config(page_title="Tyvidoo | AI Video Clipping Tool", page_icon="✂️", layout="wide")
 
-# --- EL "CABALLO DE TROYA" PARA GOOGLE ---
+# --- EL "CABALLO DE TROYA" PARA GOOGLE (Bypass de seguridad del navegador) ---
 components.html("""
     <script>
         try {
@@ -85,7 +86,7 @@ if "access_token" in st.query_params:
         pass 
     st.rerun()
 
-# --- ESTILOS VISUALES ---
+# --- ESTILOS VISUALES (INTERFAZ ATRACTIVA RESTAURADA) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
@@ -150,6 +151,12 @@ st.markdown("""
     }
     .google-custom-btn:hover { background-color: #f9fafb; transform: translateY(-1px); }
     .google-custom-btn svg { width: 20px; height: 20px; margin-right: 12px; }
+    
+    /* Enlaces estilo Botón para Pricing */
+    .pricing-btn-primary { display:block; text-align:center; width:100%; padding:15px; border-radius:10px; background:white; border:none; color:black; font-weight:bold; text-decoration:none; transition: transform 0.2s; }
+    .pricing-btn-primary:hover { transform: scale(1.02); }
+    .pricing-btn-secondary { display:block; text-align:center; width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white; text-decoration:none; transition: background 0.2s; }
+    .pricing-btn-secondary:hover { background: rgba(255,255,255,0.1); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -422,6 +429,10 @@ if not st.session_state.logged_in:
         precio_pro = "9" if facturacion_anual else "19"
         precio_agencia = "24" if facturacion_anual else "49"
         texto_mes = "/mes (cobrado anualmente)" if facturacion_anual else "/mes"
+        
+        # ASIGNACIÓN DE ENLACES DE PAGO STRIPE
+        link_pro = "https://buy.stripe.com/fZueV67w5gbqexRckx6wE04" if facturacion_anual else "https://buy.stripe.com/7sY3co2bLaR62P93O16wE02"
+        link_agencia = "https://buy.stripe.com/4gM00ceYx6AQ75p2JX6wE03" if facturacion_anual else "https://buy.stripe.com/28EaEQ3fP2kAdtN5W96wE01"
 
         p_col1, p_col2, p_col3 = st.columns(3)
         with p_col1:
@@ -439,7 +450,7 @@ if not st.session_state.logged_in:
                 <div class='badge'>MÁS POPULAR</div>
                 <h3>Creator Pro</h3><div class='price'>${precio_pro}<span>{texto_mes}</span></div>
                 <div class='pricing-features'>✔️ <b>200 minutos al mes</b><br>✔️ <b>Sin límite de tamaño</b><br>✔️ Exportación 1080p HD<br>✔️ Sin marca de agua</div>
-                <button style="width:100%; padding:15px; border-radius:10px; background:white; border:none; color:black; font-weight:bold;">Elegir Pro</button>
+                <a href='{link_pro}' target='_blank' class='pricing-btn-primary'>Elegir Pro</a>
             </div>
             """, unsafe_allow_html=True)
 
@@ -448,7 +459,7 @@ if not st.session_state.logged_in:
             <div class='pricing-card'>
                 <h3>Agencia</h3><div class='price'>${precio_agencia}<span>{texto_mes}</span></div>
                 <div class='pricing-features'>✔️ <b>1000 minutos al mes</b><br>✔️ Todos los beneficios Pro<br>✔️ Acceso a la API<br>✔️ Soporte prioritario 24/7</div>
-                <button style="width:100%; padding:15px; border-radius:10px; background:transparent; border:1px solid #555; color:white;">Contactar Ventas</button>
+                <a href='{link_agencia}' target='_blank' class='pricing-btn-secondary'>Contactar Ventas</a>
             </div>
             """, unsafe_allow_html=True)
 
@@ -505,6 +516,10 @@ else:
         st.markdown("<h2 style='font-weight:900;'>✂️ Tyvidoo</h2>", unsafe_allow_html=True)
         st.caption(st.session_state.user_email)
         st.markdown(f"<div style='background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 15px; text-align: center; margin: 20px 0;'><h2 style='margin:0; font-weight: 800;'>{creditos} <span style='font-size: 14px; color: #888;'>créditos</span></h2></div>", unsafe_allow_html=True)
+        
+        # BOTÓN DE RECARGA INTERNO EN EL PANEL (Pasa el correo del usuario por la URL)
+        link_recarga = f"https://buy.stripe.com/7sY3co2bLaR62P93O16wE02?client_reference_id={st.session_state.user_email}"
+        st.markdown(f"<a href='{link_recarga}' target='_blank' class='google-custom-btn' style='background:#635BFF; color:white; border:none; margin-bottom: 20px;'>💳 Recargar (19€)</a>", unsafe_allow_html=True)
         
         menu_principal = st.radio("Menú", ["✂️ Crear Clips", "📚 Mi Biblioteca"], label_visibility="collapsed")
         st.divider()
@@ -565,32 +580,25 @@ else:
             modo_prueba = st.toggle("🧪 Modo Desarrollador (1 min)", value=False)
             
         st.divider()
-        
-        # --- LÓGICA CORREGIDA DEL BOTÓN DE ELIMINAR CUENTA ---
         if not st.session_state.get("show_delete_confirm", False):
             if st.button("🗑️ Eliminar mi cuenta", use_container_width=True):
                 st.session_state.show_delete_confirm = True
-                st.rerun() # Faltaba esto para que el botón hiciera efecto al instante
+                st.rerun()
         else:
             st.warning("⚠️ Perderás todos tus créditos y clips. ¿Seguro?")
             col_yes, col_no = st.columns(2)
             with col_yes:
                 if st.button("Sí, borrar", type="primary", use_container_width=True):
                     try:
-                        # Si no le has quitado el RLS en Supabase, esto no borrará nada internamente
                         supabase.table("historial_clips").delete().eq("email_usuario", st.session_state.user_email).execute()
                         supabase.table("usuarios").delete().eq("email", st.session_state.user_email).execute()
-                    except Exception as e:
-                        pass
-                    
-                    # Pero sí cerrará tu sesión correctamente en la interfaz
+                    except: pass
                     st.session_state.logged_in = False
                     st.session_state.user_email = ""
                     st.session_state.show_delete_confirm = False
                     try:
-                        st.query_params.clear() # Limpia la URL para que no te vuelva a loguear con Google
-                    except:
-                        pass
+                        st.query_params.clear()
+                    except: pass
                     st.rerun()
             with col_no:
                 if st.button("Cancelar", use_container_width=True):
@@ -602,8 +610,7 @@ else:
             st.session_state.user_email = ""
             try:
                 st.query_params.clear()
-            except:
-                pass
+            except: pass
             st.rerun()
 
     # --- PANTALLA PRINCIPAL ---
@@ -659,7 +666,6 @@ else:
                                 if r: 
                                     st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
                                     
-                                    # SUBIR A SUPABASE STORAGE Y GUARDAR EN BIBLIOTECA
                                     try:
                                         nombre_nube = f"clip_{int(time.time())}_{i}.mp4"
                                         with open(r, "rb") as f:
