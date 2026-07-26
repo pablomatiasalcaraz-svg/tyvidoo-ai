@@ -480,14 +480,30 @@ if not st.session_state.logged_in:
             """, unsafe_allow_html=True)
             
         # FOOTER / PIE DE PÁGINA
-        st.markdown("<div class='footer'></div>", unsafe_allow_html=True)
+        st.markdown("<div id='legales'></div><div class='footer'></div>", unsafe_allow_html=True)
         col_f1, col_f2, col_f3 = st.columns([2, 1, 1])
         with col_f1:
             st.markdown("<h3 style='margin-bottom:10px;'>✂️ Tyvidoo</h3><p style='color:#888; font-size:14px; max-width: 300px;'>La inteligencia artificial definitiva para creadores de contenido y podcasters. Multiplica tu alcance en segundos.</p>", unsafe_allow_html=True)
         with col_f2:
-            st.markdown("<h4 style='font-size:16px;'>Compañía</h4><p style='color:#888; font-size:14px; line-height:2;'>Sobre Nosotros<br>Términos y Privacidad<br>Política de Cookies</p>", unsafe_allow_html=True)
+            st.markdown("<h4 style='font-size:16px;'>Compañía</h4><p style='color:#888; font-size:14px; line-height:2;'>Sobre Nosotros<br><a href='#legales' style='color:#888; text-decoration:none;'>Términos y Privacidad</a><br><a href='#legales' style='color:#888; text-decoration:none;'>Política de Cookies</a></p>", unsafe_allow_html=True)
         with col_f3:
-            st.markdown("<h4 style='font-size:16px;'>Soporte</h4><p style='color:#888; font-size:14px; line-height:2;'>hola@tyvidoo.com<br>Preguntas Frecuentes<br>Guía de uso rápida</p>", unsafe_allow_html=True)
+            st.markdown("<h4 style='font-size:16px;'>Soporte</h4><p style='color:#888; font-size:14px; line-height:2;'><a href='mailto:tyvidooinfo@gmail.com' style='color:#888; text-decoration:none;'>tyvidooinfo@gmail.com</a><br>Preguntas Frecuentes<br>Guía de uso rápida</p>", unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        with st.expander("⚖️ Leer Avisos Legales (Términos, Privacidad y Cookies)"):
+            st.markdown("""
+            **Términos y Condiciones de Uso**
+            Al utilizar Tyvidoo AI, aceptas nuestros términos de servicio. Nuestra plataforma proporciona herramientas de inteligencia artificial para la edición de vídeo. El usuario es el único responsable del contenido subido y procesado, garantizando que posee los derechos de autor necesarios.
+            
+            **Política de Privacidad (RGPD)**
+            Tu privacidad es nuestra prioridad. Los vídeos subidos son procesados de forma temporal y se eliminan de nuestros servidores de renderizado automáticamente. Los clips finales guardados en tu "Biblioteca" se mantienen en servidores seguros y privados asociados a tu cuenta. No compartimos ni vendemos tus datos a terceros.
+            
+            **Política de Cookies**
+            Tyvidoo utiliza cookies estrictamente necesarias para mantener tu sesión activa y ofrecerte el servicio de la plataforma. También utilizamos cookies analíticas anónimas para mejorar el rendimiento de la web. Puedes configurar tu navegador para rechazar todas las cookies, aunque algunas partes del sitio no funcionarán correctamente.
+            
+            *Para cualquier consulta legal o relacionada con tus datos, contáctanos en: tyvidooinfo@gmail.com*
+            """)
+            
         st.markdown("<p style='text-align:center; color:#555; font-size:12px; margin-top:40px;'>© 2026 Tyvidoo AI. Todos los derechos reservados.</p>", unsafe_allow_html=True)
 
     else:
