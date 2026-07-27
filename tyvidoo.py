@@ -174,6 +174,9 @@ if "aviso_ia" not in st.session_state: st.session_state.aviso_ia = ""
 if "show_delete_confirm" not in st.session_state: st.session_state.show_delete_confirm = False
 
 # --- FUNCIONES DE CALLBACK ---
+def cambiar_plantilla(nueva):
+    st.session_state.plantilla = nueva
+
 def logout_action():
     st.session_state.logged_in = False
     st.session_state.user_email = ""
@@ -581,14 +584,14 @@ else:
             b3 = "2px solid #E94057" if st.session_state.plantilla == "Neón 👾" else "1px solid #333"
             
             with col_p1:
-                st.markdown(f"""<div style='border: {b1}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05); cursor:pointer;'>
+                st.markdown(f"""<div style='border: {b1}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
                     <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #222, #444, #222); position: relative; border-radius: 6px; overflow: hidden;'>
                         <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: black; color: white; font-family: Impact, sans-serif; font-size: 7px; padding: 2px 4px; text-transform: uppercase;'>TÍTULO VIRAL</span></div>
                         <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1557804506-669a67965ba0?w=100&q=80) center/cover;'></div>
                         <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: yellow; font-family: Impact, sans-serif; font-size: 10px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>TEXTO CLAVE</div>
                     </div>
                 </div>""", unsafe_allow_html=True)
-                if st.button("💛 Horm", use_container_width=True): st.session_state.plantilla = "Hormozi 💛"; st.rerun()
+                st.button("💛 Horm", use_container_width=True, on_click=cambiar_plantilla, args=("Hormozi 💛",))
 
             with col_p2:
                 st.markdown(f"""<div style='border: {b2}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
@@ -598,7 +601,7 @@ else:
                         <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: white; font-family: Arial, sans-serif; font-size: 9px; font-weight: bold; text-shadow: 1px 1px 2px #000;'>Podcast</div>
                     </div>
                 </div>""", unsafe_allow_html=True)
-                if st.button("🎙️ Pod", use_container_width=True): st.session_state.plantilla = "Podcast 🎙️"; st.rerun()
+                st.button("🎙️ Pod", use_container_width=True, on_click=cambiar_plantilla, args=("Podcast 🎙️",))
 
             with col_p3:
                 st.markdown(f"""<div style='border: {b3}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
@@ -608,7 +611,7 @@ else:
                         <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: #f0f; font-family: Impact, sans-serif; font-size: 10px; text-shadow: 0 0 5px #f0f;'>GAMING</div>
                     </div>
                 </div>""", unsafe_allow_html=True)
-                if st.button("👾 Neón", use_container_width=True): st.session_state.plantilla = "Neón 👾"; st.rerun()
+                st.button("👾 Neón", use_container_width=True, on_click=cambiar_plantilla, args=("Neón 👾",))
                 
             plantilla = st.session_state.plantilla
             if plantilla == "Hormozi 💛": f_def, c_t, c_b, c_s, afs, aout, amv, tfs = "Impact", "#FFFFFF", "#000000", "#FFFF00", 110, 4, 450, 60
