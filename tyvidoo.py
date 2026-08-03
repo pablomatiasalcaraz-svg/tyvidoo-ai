@@ -132,16 +132,19 @@ st.markdown("""
     .section-title { font-size: 3rem; font-weight: 900; text-align: center; margin: 100px 0 20px 0; letter-spacing: -1.5px; }
     .section-subtitle { text-align: center; color: #888; margin-bottom: 50px; font-size: 1.2rem; max-width: 600px; margin-left: auto; margin-right: auto;}
     
-    .pricing-card { background: #0A0A0A; border: 1px solid #222; border-radius: 24px; padding: 40px 30px; text-align: center; position: relative; height: 100%; transition: transform 0.3s; }
+    /* --- CSS CORREGIDO PARA ALINEACIÓN DE TARJETAS --- */
+    .pricing-card { background: #0A0A0A; border: 1px solid #222; border-radius: 24px; padding: 40px 30px; text-align: center; position: relative; height: 100%; transition: transform 0.3s; display: flex; flex-direction: column; }
     .pricing-card:hover { transform: translateY(-5px); border-color: #444; }
     
     .pricing-card.pro { border: 2px solid #E94057; background: linear-gradient(180deg, #110508 0%, #0A0A0A 100%); transform: scale(1.05); z-index: 10; box-shadow: 0 10px 40px rgba(233, 64, 87, 0.2); }
     .pricing-card.pro:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 15px 50px rgba(233, 64, 87, 0.3); }
     
     .badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #E94057, #F27121); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(233,64,87,0.4);}
-    .price { font-size: 3.5rem; font-weight: 900; margin: 20px 0; color: #fff; }
-    .price span { font-size: 1.1rem; color: #666; font-weight: 500; }
-    .pricing-features { text-align: left; margin: 30px 0 40px 0; color: #ccc; font-size: 15px; line-height: 2.2; }
+    
+    .price { font-size: 3.5rem; font-weight: 900; margin: 20px 0; color: #fff; min-height: 120px; display: flex; flex-direction: column; justify-content: center; }
+    .price span { font-size: 0.9rem; color: #666; font-weight: 500; display: block; margin-top: 8px; line-height: 1.2; }
+    
+    .pricing-features { text-align: left; margin: 20px 0 40px 0; color: #ccc; font-size: 15px; line-height: 2.2; flex-grow: 1; }
     
     .google-custom-btn {
         display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #111;
@@ -152,9 +155,9 @@ st.markdown("""
     .google-custom-btn:hover { background-color: #f1f1f1; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,255,255,0.15); }
     .google-custom-btn svg { width: 22px; height: 22px; margin-right: 12px; }
     
-    .pricing-btn-primary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background: linear-gradient(90deg, #E94057, #F27121); border:none; color:white !important; font-weight:800; text-decoration:none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(233,64,87,0.3); }
+    .pricing-btn-primary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background: linear-gradient(90deg, #E94057, #F27121); border:none; color:white !important; font-weight:800; text-decoration:none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(233,64,87,0.3); margin-top: auto; }
     .pricing-btn-primary:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(233,64,87,0.5); }
-    .pricing-btn-secondary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background:transparent; border:1px solid #555; color:white !important; text-decoration:none; font-weight: 600; transition: background 0.2s; }
+    .pricing-btn-secondary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background:transparent; border:1px solid #555; color:white !important; text-decoration:none; font-weight: 600; transition: background 0.2s; margin-top: auto; }
     .pricing-btn-secondary:hover { background: rgba(255,255,255,0.05); border-color: #888; }
     
     .footer { margin-top: 80px; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.05); }
