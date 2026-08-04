@@ -107,7 +107,6 @@ st.markdown(f"""
     h1, h2, h3, h4, h5, h6 {{ color: var(--txt-main) !important; }}
     p, span, label, small {{ color: var(--txt-main) !important; }}
     
-    /* Excepciones donde sí queremos gris suave */
     .hero-subtitle, .section-subtitle, .pricing-features, 
     .stSlider div[data-testid="stTickBarMin"], 
     .stSlider div[data-testid="stTickBarMax"] {{ 
@@ -115,18 +114,18 @@ st.markdown(f"""
     }}
     
     /* --- ARREGLO DEFINITIVO PARA LA CAJA NEGRA DE UPLOAD --- */
-    [data-testid="stFileUploadDropzone"] {{ 
+    div[data-testid="stFileUploadDropzone"] {{ 
+        background: var(--card-bg) !important; /* Mata el fondo negro de Streamlit */
         background-color: var(--card-bg) !important; 
         border: 2px dashed var(--txt-muted) !important; 
         border-radius: 16px !important;
         padding: 25px !important;
     }}
-    [data-testid="stFileUploadDropzone"] div,
-    [data-testid="stFileUploadDropzone"] span,
-    [data-testid="stFileUploadDropzone"] small {{
-        color: var(--txt-main) !important; /* Fuerza a que las letras se lean */
+    div[data-testid="stFileUploadDropzone"] * {{
+        color: var(--txt-main) !important; 
     }}
-    [data-testid="stFileUploadDropzone"] button {{ 
+    div[data-testid="stFileUploadDropzone"] button {{ 
+        background: var(--bg-main) !important;
         background-color: var(--bg-main) !important; 
         color: var(--txt-main) !important; 
         border: 1px solid var(--txt-main) !important; 
@@ -134,9 +133,12 @@ st.markdown(f"""
         font-weight: 600 !important;
     }}
     
-    /* --- ARREGLO DE BARRA LATERAL --- */
+    /* --- ARREGLO DE BARRA LATERAL, RADIO BUTTONS Y SLIDER --- */
     [data-testid="stSidebar"] {{ background-color: var(--sidebar-bg) !important; border-right: 1px solid var(--card-border) !important; }}
     [data-testid="stSidebarHeader"] {{ background-color: var(--sidebar-bg) !important; }}
+    
+    .stRadio [role="radiogroup"] * {{ color: var(--txt-main) !important; }}
+    .stSlider [role="slider"] {{ background: #E94057 !important; border: none !important; }}
     
     /* --- BOTONES PRINCIPALES Y SECUNDARIOS --- */
     [data-testid="baseButton-primary"] {{ 
@@ -155,7 +157,7 @@ st.markdown(f"""
     [data-testid="baseButton-primary"]:hover {{ transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 20px rgba(233,64,87,0.5) !important; }}
     
     [data-testid="baseButton-secondary"] {{ 
-        background-color: var(--card-bg) !important; 
+        background: var(--card-bg) !important; 
         border: 1px solid var(--card-border) !important; 
         border-radius: 12px !important; 
         transition: all 0.2s !important; 
@@ -164,7 +166,7 @@ st.markdown(f"""
         color: var(--txt-main) !important; 
         font-weight: 600 !important;
     }}
-    [data-testid="baseButton-secondary"]:hover {{ background-color: var(--card-hover) !important; transform: translateY(-2px); }}
+    [data-testid="baseButton-secondary"]:hover {{ background: var(--card-hover) !important; transform: translateY(-2px); }}
     
     /* --- ESTÉTICA GENERAL --- */
     .top-nav {{ display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--card-border); margin-bottom: 50px; }}
@@ -223,7 +225,7 @@ st.markdown(f"""
     
     .footer {{ margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--card-border); }}
     
-    .stTextInput input {{ background-color: var(--bg-main) !important; color: var(--txt-main) !important; border: 1px solid var(--card-border) !important; }}
+    .stTextInput input {{ background: var(--bg-main) !important; color: var(--txt-main) !important; border: 1px solid var(--card-border) !important; }}
     </style>
 """, unsafe_allow_html=True)
 
