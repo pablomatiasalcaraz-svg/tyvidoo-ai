@@ -14,6 +14,19 @@ import random
 import base64
 import streamlit.components.v1 as components
 
+# --- INICIALIZAR MEMORIA (Antes de cargar la interfaz) ---
+if "tema" not in st.session_state: st.session_state.tema = "dark"
+if "logged_in" not in st.session_state: st.session_state.logged_in = False
+if "user_email" not in st.session_state: st.session_state.user_email = ""
+if "mis_clips_data" not in st.session_state: st.session_state.mis_clips_data = [] 
+if "plantilla" not in st.session_state: st.session_state.plantilla = "Hormozi 💛"
+if "whisper_data" not in st.session_state: st.session_state.whisper_data = None
+if "video_bruto_path" not in st.session_state: st.session_state.video_bruto_path = None
+if "duracion_max_video" not in st.session_state: st.session_state.duracion_max_video = 100.0
+if "show_auth" not in st.session_state: st.session_state.show_auth = False
+if "aviso_ia" not in st.session_state: st.session_state.aviso_ia = ""
+if "show_delete_confirm" not in st.session_state: st.session_state.show_delete_confirm = False
+
 # --- CONFIGURACIÓN DE SECRETOS ---
 try:
     API_KEY = os.environ.get("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
@@ -42,6 +55,124 @@ def decode_jwt(token):
 
 # --- CONFIGURACIÓN DE PÁGINA Y CSS PREMIUM ---
 st.set_page_config(page_title="Tyvidoo | AI Video Clipping Tool", page_icon="✂️", layout="wide")
+
+# --- VARIABLES DE TEMA (MODO DÍA Y MODO NOCHE) ---
+if st.session_state.tema == "dark":
+    theme_vars = """
+    :root {
+        --bg-main: #050505;
+        --txt-main: #ffffff;
+        --txt-muted: #888888;
+        --card-bg: rgba(255,255,255,0.02);
+        --card-border: rgba(255,255,255,0.05);
+        --card-hover: rgba(255,255,255,0.2);
+        --btn-sec-bg: rgba(255,255,255,0.05);
+        --btn-sec-hover: rgba(255,255,255,0.1);
+        --pricing-bg: #0A0A0A;
+        --pricing-pro-bg: linear-gradient(180deg, #110508 0%, #0A0A0A 100%);
+        --glass-card: rgba(255,255,255,0.03);
+        --dash-header: linear-gradient(135deg, #111111 0%, #050505 100%);
+    }
+    """
+else:
+    theme_vars = """
+    :root {
+        --bg-main: #F4F6F8;
+        --txt-main: #111111;
+        --txt-muted: #555555;
+        --card-bg: #FFFFFF;
+        --card-border: rgba(0,0,0,0.1);
+        --card-hover: rgba(0,0,0,0.3);
+        --btn-sec-bg: rgba(0,0,0,0.05);
+        --btn-sec-hover: rgba(0,0,0,0.1);
+        --pricing-bg: #FFFFFF;
+        --pricing-pro-bg: linear-gradient(180deg, #FFF0F2 0%, #FFFFFF 100%);
+        --glass-card: #FFFFFF;
+        --dash-header: linear-gradient(135deg, #FFFFFF 0%, #E8EBEF 100%);
+    }
+    """
+
+st.markdown(f"""
+    <style>
+    {theme_vars}
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+    html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
+    .stApp {{ background-color: var(--bg-main); color: var(--txt-main); transition: all 0.3s ease; }}
+    header {{visibility: hidden;}}
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    .block-container {{ padding-top: 1rem !important; max-width: 1200px; padding-bottom: 5rem;}}
+    
+    .top-nav {{ display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--card-border); margin-bottom: 50px; }}
+    .nav-logo {{ font-size: 26px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #E94057, #F27121); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+    
+    .hero-tag {{ color: #E94057; font-size: 13px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px; display: inline-block; background: rgba(233, 64, 87, 0.1); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(233, 64, 87, 0.3);}}
+    .hero-title {{ font-size: 4.5rem; font-weight: 900; line-height: 1.1; letter-spacing: -2.5px; margin-bottom: 25px; }}
+    .hero-title-gradient {{ background: linear-gradient(90deg, #8A2387, #E94057, #F27121); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }}
+    .hero-subtitle {{ font-size: 1.3rem; color: var(--txt-muted); font-weight: 400; max-width: 750px; margin: 0 auto 40px auto; line-height: 1.6; text-align: center; }}
+    
+    .dash-header {{ background: var(--dash-header); padding: 40px; border-radius: 24px; border: 1px solid var(--card-border); margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }}
+    .dash-title {{ font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }}
+    
+    .glass-card {{ background: var(--glass-card); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; text-align: center; transition: all 0.3s ease; }}
+    .glass-card:hover {{ transform: translateY(-5px); border: 1px solid var(--card-hover); }}
+
+    .stButton>button[kind="primary"] {{ background-color: var(--txt-main) !important; color: var(--bg-main) !important; font-weight: 800 !important; border-radius: 12px !important; border: none !important; font-size: 16px !important; padding: 12px 30px !important; width: 100% !important; margin-top: 10px; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+    .stButton>button[kind="primary"]:hover {{ transform: translateY(-2px) scale(1.02); opacity: 0.9; }}
+    
+    .stButton>button[kind="secondary"] {{ background-color: var(--btn-sec-bg) !important; color: var(--txt-main) !important; border: 1px solid var(--card-border) !important; padding: 12px !important; border-radius: 12px !important; transition: all 0.2s; }}
+    .stButton>button[kind="secondary"]:hover {{ background-color: var(--btn-sec-hover) !important; transform: translateY(-2px);}}
+    
+    .stDownloadButton>button {{ background-color: var(--pricing-bg) !important; color: var(--txt-main) !important; font-weight: 600 !important; border-radius: 8px !important; border: 1px solid var(--card-border) !important; }}
+    .stDownloadButton>button:hover {{ background-color: var(--btn-sec-bg) !important; border: 1px solid var(--card-hover) !important;}}
+    
+    .stTabs [data-baseweb="tab-list"] {{ gap: 24px; justify-content: center; }}
+    .stTabs [data-baseweb="tab"] {{ height: 50px; white-space: pre-wrap; background-color: transparent; border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px; font-weight: 600; font-size: 16px; color: var(--txt-muted);}}
+    .stTabs [aria-selected="true"] {{ color: var(--txt-main) !important; border-bottom: 2px solid #E94057 !important; }}
+    
+    .marquee-wrapper {{ overflow: hidden; white-space: nowrap; margin-top: 60px; padding: 30px 0; border-top: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border); background: var(--bg-main); }}
+    .marquee-content {{ display: inline-block; animation: marquee 35s linear infinite; }}
+    .review-card {{ display: inline-block; background: var(--glass-card); padding: 25px 40px; border-radius: 20px; border: 1px solid var(--card-border); margin-right: 30px; font-size: 16px; color: var(--txt-main); backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }}
+    .review-author {{ display: block; margin-top: 12px; font-weight: 800; font-size: 14px; color: var(--txt-main); }}
+    @keyframes marquee {{ 0% {{ transform: translateX(0); }} 100% {{ transform: translateX(-50%); }} }}
+
+    .section-title {{ font-size: 3rem; font-weight: 900; text-align: center; margin: 100px 0 20px 0; letter-spacing: -1.5px; }}
+    .section-subtitle {{ text-align: center; color: var(--txt-muted); margin-bottom: 50px; font-size: 1.2rem; max-width: 600px; margin-left: auto; margin-right: auto;}}
+    
+    .pricing-card {{ background: var(--pricing-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 40px 30px; text-align: center; position: relative; height: 100%; transition: transform 0.3s; display: flex; flex-direction: column; }}
+    .pricing-card:hover {{ transform: translateY(-5px); border-color: var(--card-hover); }}
+    
+    .pricing-card.pro {{ border: 2px solid #E94057; background: var(--pricing-pro-bg); transform: scale(1.05); z-index: 10; box-shadow: 0 10px 40px rgba(233, 64, 87, 0.2); }}
+    .pricing-card.pro:hover {{ transform: scale(1.05) translateY(-5px); box-shadow: 0 15px 50px rgba(233, 64, 87, 0.3); }}
+    
+    .badge {{ position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #E94057, #F27121); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(233,64,87,0.4);}}
+    
+    .price {{ font-size: 3.5rem; font-weight: 900; margin: 20px 0; color: var(--txt-main); min-height: 120px; display: flex; flex-direction: column; justify-content: center; }}
+    .price span {{ font-size: 0.9rem; color: var(--txt-muted); font-weight: 500; display: block; margin-top: 8px; line-height: 1.2; }}
+    
+    .pricing-features {{ text-align: left; margin: 20px 0 40px 0; color: var(--txt-muted); font-size: 15px; line-height: 2.2; flex-grow: 1; }}
+    
+    .google-custom-btn {{
+        display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #111;
+        font-weight: 700; font-size: 16px; border-radius: 14px; padding: 14px 24px;
+        text-decoration: none; border: 1px solid #ddd; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: all 0.2s ease; width: 100%; margin-top: 15px; cursor: pointer;
+    }}
+    .google-custom-btn:hover {{ background-color: #f1f1f1; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }}
+    .google-custom-btn svg {{ width: 22px; height: 22px; margin-right: 12px; }}
+    
+    .pricing-btn-primary {{ display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background: linear-gradient(90deg, #E94057, #F27121); border:none; color:white !important; font-weight:800; text-decoration:none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(233,64,87,0.3); margin-top: auto; }}
+    .pricing-btn-primary:hover {{ transform: scale(1.03); box-shadow: 0 6px 20px rgba(233,64,87,0.5); }}
+    .pricing-btn-secondary {{ display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background:transparent; border:1px solid var(--card-border); color:var(--txt-main) !important; text-decoration:none; font-weight: 600; transition: background 0.2s; margin-top: auto; }}
+    .pricing-btn-secondary:hover {{ background: var(--btn-sec-bg); border-color: var(--txt-muted); }}
+    
+    .footer {{ margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--card-border); }}
+    
+    /* Prevenir que Streamlit oscurezca inputs en modo claro */
+    .stTextInput input {{ background-color: var(--bg-main) !important; color: var(--txt-main) !important; border: 1px solid var(--card-border) !important; }}
+    </style>
+""", unsafe_allow_html=True)
+
 
 # --- EL "CABALLO DE TROYA" PARA GOOGLE ---
 components.html("""
@@ -85,96 +216,6 @@ if "access_token" in st.query_params:
         pass 
     st.rerun()
 
-# --- ESTILOS VISUALES ATRACTIVOS ---
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-    .stApp { background-color: #050505; color: #ffffff; }
-    header {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .block-container { padding-top: 1rem !important; max-width: 1200px; padding-bottom: 5rem;}
-    
-    .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 50px; }
-    .nav-logo { font-size: 26px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #FFFFFF, #AAAAAA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    
-    .hero-tag { color: #E94057; font-size: 13px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px; display: inline-block; background: rgba(233, 64, 87, 0.1); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(233, 64, 87, 0.3);}
-    .hero-title { font-size: 4.5rem; font-weight: 900; line-height: 1.1; letter-spacing: -2.5px; margin-bottom: 25px; }
-    .hero-title-gradient { background: linear-gradient(90deg, #8A2387, #E94057, #F27121); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
-    .hero-subtitle { font-size: 1.3rem; color: #A0A0A0; font-weight: 400; max-width: 750px; margin: 0 auto 40px auto; line-height: 1.6; text-align: center; }
-    
-    .dash-header { background: linear-gradient(135deg, #111111 0%, #050505 100%); padding: 40px; border-radius: 24px; border: 1px solid #222; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .dash-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
-    
-    .glass-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; text-align: center; transition: all 0.3s ease; }
-    .glass-card:hover { transform: translateY(-5px); border: 1px solid rgba(255,255,255,0.2); }
-
-    .stButton>button[kind="primary"] { background-color: #ffffff !important; color: #000000 !important; font-weight: 800 !important; border-radius: 12px !important; border: none !important; font-size: 16px !important; padding: 12px 30px !important; width: 100% !important; margin-top: 10px; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
-    .stButton>button[kind="primary"]:hover { transform: translateY(-2px) scale(1.02); background-color: #eeeeee !important; }
-    
-    .stButton>button[kind="secondary"] { background-color: rgba(255,255,255,0.05) !important; color: #fff !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 12px !important; border-radius: 12px !important; transition: all 0.2s; }
-    .stButton>button[kind="secondary"]:hover { background-color: rgba(255,255,255,0.1) !important; transform: translateY(-2px);}
-    
-    .stDownloadButton>button { background-color: #222222 !important; color: #ffffff !important; font-weight: 600 !important; border-radius: 8px !important; border: 1px solid #444 !important; }
-    .stDownloadButton>button:hover { background-color: #333333 !important; border: 1px solid #666 !important;}
-    
-    .stTabs [data-baseweb="tab-list"] { gap: 24px; justify-content: center; }
-    .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: transparent; border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px; font-weight: 600; font-size: 16px; color: #888;}
-    .stTabs [aria-selected="true"] { color: #ffffff !important; border-bottom: 2px solid #E94057 !important; }
-    
-    .marquee-wrapper { overflow: hidden; white-space: nowrap; margin-top: 60px; padding: 30px 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); background: linear-gradient(90deg, #050505 0%, rgba(255,255,255,0.02) 50%, #050505 100%); }
-    .marquee-content { display: inline-block; animation: marquee 35s linear infinite; }
-    .review-card { display: inline-block; background: rgba(255,255,255,0.03); padding: 25px 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); margin-right: 30px; font-size: 16px; color: #ddd; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-    .review-author { display: block; margin-top: 12px; color: #fff; font-weight: 800; font-size: 14px; }
-    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-
-    .section-title { font-size: 3rem; font-weight: 900; text-align: center; margin: 100px 0 20px 0; letter-spacing: -1.5px; }
-    .section-subtitle { text-align: center; color: #888; margin-bottom: 50px; font-size: 1.2rem; max-width: 600px; margin-left: auto; margin-right: auto;}
-    
-    .pricing-card { background: #0A0A0A; border: 1px solid #222; border-radius: 24px; padding: 40px 30px; text-align: center; position: relative; height: 100%; transition: transform 0.3s; display: flex; flex-direction: column; }
-    .pricing-card:hover { transform: translateY(-5px); border-color: #444; }
-    
-    .pricing-card.pro { border: 2px solid #E94057; background: linear-gradient(180deg, #110508 0%, #0A0A0A 100%); transform: scale(1.05); z-index: 10; box-shadow: 0 10px 40px rgba(233, 64, 87, 0.2); }
-    .pricing-card.pro:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 15px 50px rgba(233, 64, 87, 0.3); }
-    
-    .badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #E94057, #F27121); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(233,64,87,0.4);}
-    
-    .price { font-size: 3.5rem; font-weight: 900; margin: 20px 0; color: #fff; min-height: 120px; display: flex; flex-direction: column; justify-content: center; }
-    .price span { font-size: 0.9rem; color: #666; font-weight: 500; display: block; margin-top: 8px; line-height: 1.2; }
-    
-    .pricing-features { text-align: left; margin: 20px 0 40px 0; color: #ccc; font-size: 15px; line-height: 2.2; flex-grow: 1; }
-    
-    .google-custom-btn {
-        display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #111;
-        font-weight: 700; font-size: 16px; border-radius: 14px; padding: 14px 24px;
-        text-decoration: none; border: none; box-shadow: 0 4px 15px rgba(255,255,255,0.1);
-        transition: all 0.2s ease; width: 100%; margin-top: 15px; cursor: pointer;
-    }
-    .google-custom-btn:hover { background-color: #f1f1f1; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,255,255,0.15); }
-    .google-custom-btn svg { width: 22px; height: 22px; margin-right: 12px; }
-    
-    .pricing-btn-primary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background: linear-gradient(90deg, #E94057, #F27121); border:none; color:white !important; font-weight:800; text-decoration:none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(233,64,87,0.3); margin-top: auto; }
-    .pricing-btn-primary:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(233,64,87,0.5); }
-    .pricing-btn-secondary { display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background:transparent; border:1px solid #555; color:white !important; text-decoration:none; font-weight: 600; transition: background 0.2s; margin-top: auto; }
-    .pricing-btn-secondary:hover { background: rgba(255,255,255,0.05); border-color: #888; }
-    
-    .footer { margin-top: 80px; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.05); }
-    </style>
-""", unsafe_allow_html=True)
-
-# --- INICIALIZAR MEMORIA ---
-if "logged_in" not in st.session_state: st.session_state.logged_in = False
-if "user_email" not in st.session_state: st.session_state.user_email = ""
-if "mis_clips_data" not in st.session_state: st.session_state.mis_clips_data = [] 
-if "plantilla" not in st.session_state: st.session_state.plantilla = "Hormozi 💛"
-if "whisper_data" not in st.session_state: st.session_state.whisper_data = None
-if "video_bruto_path" not in st.session_state: st.session_state.video_bruto_path = None
-if "duracion_max_video" not in st.session_state: st.session_state.duracion_max_video = 100.0
-if "show_auth" not in st.session_state: st.session_state.show_auth = False
-if "aviso_ia" not in st.session_state: st.session_state.aviso_ia = ""
-if "show_delete_confirm" not in st.session_state: st.session_state.show_delete_confirm = False
-
 # --- FUNCIONES DE CALLBACK ---
 def cambiar_plantilla(nueva):
     st.session_state.plantilla = nueva
@@ -197,6 +238,9 @@ def execute_delete_action():
         supabase.table("usuarios").delete().eq("email", st.session_state.user_email).execute()
     except: pass
     logout_action()
+
+def toggle_theme():
+    st.session_state.tema = "light" if st.session_state.tema == "dark" else "dark"
 
 # --- FUNCIONES DE BASE DE DATOS ---
 def registrar_usuario(email, password):
@@ -263,7 +307,7 @@ def procesar_video_local(archivo_path, cant, d_min, d_max, prog):
                 os.remove(os.path.join(d, archivo))
 
     a = os.path.abspath("archivos_brutos/a.mp3")
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎵 Extrayendo audio...</h3></div>", unsafe_allow_html=True)
+    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3 style='color:var(--txt-main);'>🎵 Extrayendo audio...</h3></div>", unsafe_allow_html=True)
     
     cmd_audio = ["ffmpeg", "-y", "-i", archivo_path, "-b:a", "32k", "-map", "a", a]
     subprocess.run(cmd_audio, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -271,7 +315,7 @@ def procesar_video_local(archivo_path, cant, d_min, d_max, prog):
     return procesar_ia(a, archivo_path, cant, d_min, d_max, prog)
 
 def procesar_ia(a, v, cant, d_min, d_max, prog):
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🧠 La IA está analizando tu vídeo...</h3></div>", unsafe_allow_html=True)
+    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3 style='color:var(--txt-main);'>🧠 La IA está analizando tu vídeo...</h3></div>", unsafe_allow_html=True)
     
     client = OpenAI(api_key=API_KEY)
     with open(a, "rb") as audio_file:
@@ -285,7 +329,7 @@ def procesar_ia(a, v, cant, d_min, d_max, prog):
     st.session_state.video_bruto_path = v
     if res_w.get("words"): st.session_state.duracion_max_video = res_w["words"][-1]["end"]
 
-    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3>🎯 Mapeando los cortes exactos...</h3></div>", unsafe_allow_html=True)
+    prog.markdown("<div class='loader-container'><div class='pulse-ring'></div><h3 style='color:var(--txt-main);'>🎯 Mapeando los cortes exactos...</h3></div>", unsafe_allow_html=True)
     
     transcript_con_tiempos = ""
     palabras = res_w.get("words", [])
@@ -369,8 +413,12 @@ def renderizar_un_clip(num, ini, fin, tit, res_w, vid, font, tit_fs, col_tit, co
 # VISTA 1: LANDING PAGE COMPLETA + GOOGLE LOGIN
 # ==========================================
 if not st.session_state.logged_in:
-    col_logo, col_space, col_login = st.columns([2, 5, 1])
+    col_logo, col_space, col_theme, col_login = st.columns([2, 4, 1, 1])
     with col_logo: st.markdown("<div class='top-nav'><div class='nav-logo'>✂️ Tyvidoo</div></div>", unsafe_allow_html=True)
+    with col_theme:
+        st.write("")
+        btn_tema = "🌞 Día" if st.session_state.tema == "dark" else "🌙 Noche"
+        if st.button(btn_tema, use_container_width=True, on_click=toggle_theme): pass
     with col_login:
         st.write("")
         if st.button("Iniciar Sesión", use_container_width=True, type="secondary"):
@@ -388,8 +436,8 @@ if not st.session_state.logged_in:
 
         col_pad1, col_center, col_pad2 = st.columns([2, 6, 2])
         with col_center:
-            st.markdown("<div style='background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 40px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);'>", unsafe_allow_html=True)
-            st.markdown("<h3 style='margin-bottom: 25px;'>Pruébalo ahora mismo 👇</h3>", unsafe_allow_html=True)
+            st.markdown("<div style='background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 40px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);'>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin-bottom: 25px; color: var(--txt-main);'>Pruébalo ahora mismo 👇</h3>", unsafe_allow_html=True)
             
             st.file_uploader("Sube tu archivo de vídeo o podcast (MP4, MOV)", type=["mp4", "mov"], label_visibility="collapsed")
             
@@ -412,7 +460,7 @@ if not st.session_state.logged_in:
         
         c_vid1, c_vid2, c_vid3 = st.columns(3)
         with c_vid1:
-            st.markdown(f"""<div style='border: 2px solid #333; border-radius: 12px; padding: 6px; background: rgba(255,255,255,0.05); cursor:pointer;'>
+            st.markdown(f"""<div style='border: 2px solid var(--card-border); border-radius: 12px; padding: 6px; background: var(--card-bg); cursor:pointer;'>
                 <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #222, #444, #222); position: relative; border-radius: 8px; overflow: hidden;'>
                     <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: black; color: white; font-family: Impact, sans-serif; font-size: 14px; padding: 4px 8px; text-transform: uppercase;'>TÍTULO VIRAL</span></div>
                     <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&q=80) center/cover;'></div>
@@ -421,16 +469,16 @@ if not st.session_state.logged_in:
             </div><h4 style='margin-top:15px; text-align:center;'>Estilo Hormozi 💛</h4>""", unsafe_allow_html=True)
             
         with c_vid2:
-            st.markdown(f"""<div style='border: 2px solid #333; border-radius: 12px; padding: 6px; background: rgba(255,255,255,0.05);'>
+            st.markdown(f"""<div style='border: 2px solid var(--card-border); border-radius: 12px; padding: 6px; background: var(--card-bg);'>
                 <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #111, #333, #111); position: relative; border-radius: 8px; overflow: hidden;'>
-                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #333; color: white; font-family: Arial, sans-serif; font-size: 14px; padding: 4px 8px;'>EL TEMA</span></div>
+                    <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: var(--txt-main); color: var(--bg-main); font-family: Arial, sans-serif; font-size: 14px; padding: 4px 8px;'>EL TEMA</span></div>
                     <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?w=400&q=80) center/cover;'></div>
                     <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: white; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; text-shadow: 1px 1px 2px #000;'>Podcast</div>
                 </div>
             </div><h4 style='margin-top:15px; text-align:center;'>Estilo Podcast 🎙️</h4>""", unsafe_allow_html=True)
 
         with c_vid3:
-            st.markdown(f"""<div style='border: 2px solid #333; border-radius: 12px; padding: 6px; background: rgba(255,255,255,0.05);'>
+            st.markdown(f"""<div style='border: 2px solid var(--card-border); border-radius: 12px; padding: 6px; background: var(--card-bg);'>
                 <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #001, #003, #001); position: relative; border-radius: 8px; overflow: hidden;'>
                     <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #111; color: #0ff; font-family: Impact, sans-serif; font-size: 14px; padding: 4px 8px; text-transform: uppercase;'>MOMENTO</span></div>
                     <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80) center/cover;'></div>
@@ -457,7 +505,7 @@ if not st.session_state.logged_in:
         with p_col1:
             st.markdown(f"""
             <div class='pricing-card' style='margin-bottom: 15px;'>
-                <h3 style='color: #fff;'>Starter Gratuito</h3><div class='price'>$0<span>/mes</span></div>
+                <h3 style='color: var(--txt-main);'>Starter Gratuito</h3><div class='price'>$0<span>/mes</span></div>
                 <div class='pricing-features'>✔️ <b>20 créditos de regalo</b><br>✔️ Exportación a 720p<br>✔️ Modelos estándar de IA<br>❌ Límite de tamaño</div>
             </div>
             """, unsafe_allow_html=True)
@@ -469,8 +517,8 @@ if not st.session_state.logged_in:
             st.markdown(f"""
             <div class='pricing-card pro'>
                 <div class='badge'>MÁS POPULAR</div>
-                <h3 style='color: #fff;'>Creator Pro</h3><div class='price'>${precio_pro}<span>{texto_mes}</span></div>
-                <div class='pricing-features'>✔️ <b>150 créditos al mes</b><br>✔️ <b>Sin límite de tamaño</b><br>✔️ Exportación 1080p HD<br>✔️ Sin marca de agua</div>
+                <h3 style='color: #fff;'>Creator Pro</h3><div class='price' style='color:#fff;'>${precio_pro}<span style='color:#ccc;'>{texto_mes}</span></div>
+                <div class='pricing-features' style='color:#ddd;'>✔️ <b>150 créditos al mes</b><br>✔️ <b>Sin límite de tamaño</b><br>✔️ Exportación 1080p HD<br>✔️ Sin marca de agua</div>
                 <a href='{link_pro}' target='_blank' class='pricing-btn-primary'>Empezar como Pro</a>
             </div>
             """, unsafe_allow_html=True)
@@ -478,7 +526,7 @@ if not st.session_state.logged_in:
         with p_col3:
             st.markdown(f"""
             <div class='pricing-card'>
-                <h3 style='color: #fff;'>Agencia</h3><div class='price'>${precio_agencia}<span>{texto_mes}</span></div>
+                <h3 style='color: var(--txt-main);'>Agencia</h3><div class='price'>${precio_agencia}<span>{texto_mes}</span></div>
                 <div class='pricing-features'>✔️ <b>1000 minutos al mes</b><br>✔️ Todos los beneficios Pro<br>✔️ Acceso a la API<br>✔️ Soporte prioritario 24/7</div>
                 <a href='{link_agencia}' target='_blank' class='pricing-btn-secondary'>Obtener Plan Agencia</a>
             </div>
@@ -488,11 +536,11 @@ if not st.session_state.logged_in:
         st.markdown("<div id='legales'></div><div class='footer'></div>", unsafe_allow_html=True)
         col_f1, col_f2, col_f3 = st.columns([2, 1, 1])
         with col_f1:
-            st.markdown("<h3 style='margin-bottom:10px;'>✂️ Tyvidoo</h3><p style='color:#888; font-size:14px; max-width: 300px;'>La inteligencia artificial definitiva para creadores de contenido y podcasters. Multiplica tu alcance en segundos.</p>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin-bottom:10px; color:var(--txt-main);'>✂️ Tyvidoo</h3><p style='color:var(--txt-muted); font-size:14px; max-width: 300px;'>La inteligencia artificial definitiva para creadores de contenido y podcasters. Multiplica tu alcance en segundos.</p>", unsafe_allow_html=True)
         with col_f2:
-            st.markdown("<h4 style='font-size:16px;'>Compañía</h4><p style='color:#888; font-size:14px; line-height:2;'>Sobre Nosotros<br><a href='#legales' style='color:#888; text-decoration:none;'>Términos y Privacidad</a><br><a href='#legales' style='color:#888; text-decoration:none;'>Política de Cookies</a></p>", unsafe_allow_html=True)
+            st.markdown("<h4 style='font-size:16px;'>Compañía</h4><p style='color:var(--txt-muted); font-size:14px; line-height:2;'>Sobre Nosotros<br><a href='#legales' style='color:var(--txt-muted); text-decoration:none;'>Términos y Privacidad</a><br><a href='#legales' style='color:var(--txt-muted); text-decoration:none;'>Política de Cookies</a></p>", unsafe_allow_html=True)
         with col_f3:
-            st.markdown("<h4 style='font-size:16px;'>Soporte</h4><p style='color:#888; font-size:14px; line-height:2;'><a href='mailto:tyvidooinfo@gmail.com' style='color:#888; text-decoration:none;'>tyvidooinfo@gmail.com</a><br>Preguntas Frecuentes<br>Guía de uso rápida</p>", unsafe_allow_html=True)
+            st.markdown("<h4 style='font-size:16px;'>Soporte</h4><p style='color:var(--txt-muted); font-size:14px; line-height:2;'><a href='mailto:tyvidooinfo@gmail.com' style='color:var(--txt-muted); text-decoration:none;'>tyvidooinfo@gmail.com</a><br>Preguntas Frecuentes<br>Guía de uso rápida</p>", unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
         with st.expander("⚖️ Leer Avisos Legales (Términos, Privacidad y Cookies)"):
@@ -509,10 +557,10 @@ if not st.session_state.logged_in:
             *Para cualquier consulta legal o relacionada con tus datos, contáctanos en: tyvidooinfo@gmail.com*
             """)
             
-        st.markdown("<p style='text-align:center; color:#555; font-size:12px; margin-top:40px;'>© 2026 Tyvidoo AI. Todos los derechos reservados.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:var(--txt-muted); font-size:12px; margin-top:40px;'>© 2026 Tyvidoo AI. Todos los derechos reservados.</p>", unsafe_allow_html=True)
 
     else:
-        st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 900; font-size: 2.5rem;'>Crea tu cuenta gratis</h2><p style='color: #888;'>Accede a tu espacio de trabajo y recibe tus 20 créditos de bienvenida.</p></div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 900; font-size: 2.5rem;'>Crea tu cuenta gratis</h2><p style='color: var(--txt-muted);'>Accede a tu espacio de trabajo y recibe tus 20 créditos de bienvenida.</p></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             url_oauth_google = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=https://aware-mercy-production-e677.up.railway.app"
@@ -528,7 +576,7 @@ if not st.session_state.logged_in:
                 </a>
             """, unsafe_allow_html=True)
             
-            st.markdown("<p style='text-align:center; margin:25px 0; color:#555; font-size: 14px;'>— O USA TU CORREO —</p>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align:center; margin:25px 0; color:var(--txt-muted); font-size: 14px;'>— O USA TU CORREO —</p>", unsafe_allow_html=True)
             
             tab1, tab2 = st.tabs(["📝 Registrarse", "🔐 Iniciar Sesión"])
             with tab1:
@@ -564,7 +612,7 @@ else:
     with st.sidebar:
         st.markdown("<h2 style='font-weight:900;'>✂️ Tyvidoo</h2>", unsafe_allow_html=True)
         st.caption(st.session_state.user_email)
-        st.markdown(f"<div style='background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);'><h2 style='margin:0; font-weight: 900; color: #fff;'>{creditos}</h2><span style='font-size: 13px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;'>créditos restantes</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='background: var(--card-bg); border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid var(--card-border);'><h2 style='margin:0; font-weight: 900; color: var(--txt-main);'>{creditos}</h2><span style='font-size: 13px; color: var(--txt-muted); text-transform: uppercase; letter-spacing: 1px;'>créditos restantes</span></div>", unsafe_allow_html=True)
         
         link_recarga = f"https://buy.stripe.com/7sY3co2bLaR62P93O16wE02?client_reference_id={st.session_state.user_email}"
         st.markdown(f"<a href='{link_recarga}' target='_blank' style='display:block; text-align:center; width:100%; padding:12px; border-radius:10px; background: linear-gradient(90deg, #8A2387, #E94057); border:none; color:white; font-weight:bold; text-decoration:none; margin-bottom: 25px;'>⚡ Recargar Créditos</a>", unsafe_allow_html=True)
@@ -581,12 +629,12 @@ else:
             st.markdown("<b>🎨 Elige tu Diseño Final</b>", unsafe_allow_html=True)
             
             col_p1, col_p2, col_p3 = st.columns(3)
-            b1 = "2px solid #E94057" if st.session_state.plantilla == "Hormozi 💛" else "1px solid #333"
-            b2 = "2px solid #E94057" if st.session_state.plantilla == "Podcast 🎙️" else "1px solid #333"
-            b3 = "2px solid #E94057" if st.session_state.plantilla == "Neón 👾" else "1px solid #333"
+            b1 = "2px solid #E94057" if st.session_state.plantilla == "Hormozi 💛" else "1px solid var(--card-border)"
+            b2 = "2px solid #E94057" if st.session_state.plantilla == "Podcast 🎙️" else "1px solid var(--card-border)"
+            b3 = "2px solid #E94057" if st.session_state.plantilla == "Neón 👾" else "1px solid var(--card-border)"
             
             with col_p1:
-                st.markdown(f"""<div style='border: {b1}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
+                st.markdown(f"""<div style='border: {b1}; border-radius: 8px; padding: 4px; background: var(--card-bg);'>
                     <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #222, #444, #222); position: relative; border-radius: 6px; overflow: hidden;'>
                         <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: black; color: white; font-family: Impact, sans-serif; font-size: 7px; padding: 2px 4px; text-transform: uppercase;'>TÍTULO VIRAL</span></div>
                         <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1557804506-669a67965ba0?w=100&q=80) center/cover;'></div>
@@ -596,7 +644,7 @@ else:
                 st.button("💛 Horm", use_container_width=True, on_click=cambiar_plantilla, args=("Hormozi 💛",))
 
             with col_p2:
-                st.markdown(f"""<div style='border: {b2}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
+                st.markdown(f"""<div style='border: {b2}; border-radius: 8px; padding: 4px; background: var(--card-bg);'>
                     <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #111, #333, #111); position: relative; border-radius: 6px; overflow: hidden;'>
                         <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #333; color: white; font-family: Arial, sans-serif; font-size: 7px; padding: 2px 4px;'>EL TEMA</span></div>
                         <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?w=100&q=80) center/cover;'></div>
@@ -606,7 +654,7 @@ else:
                 st.button("🎙️ Pod", use_container_width=True, on_click=cambiar_plantilla, args=("Podcast 🎙️",))
 
             with col_p3:
-                st.markdown(f"""<div style='border: {b3}; border-radius: 8px; padding: 4px; background: rgba(255,255,255,0.05);'>
+                st.markdown(f"""<div style='border: {b3}; border-radius: 8px; padding: 4px; background: var(--card-bg);'>
                     <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #001, #003, #001); position: relative; border-radius: 6px; overflow: hidden;'>
                         <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #111; color: #0ff; font-family: Impact, sans-serif; font-size: 7px; padding: 2px 4px; text-transform: uppercase;'>MOMENTO</span></div>
                         <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1542751371-adc38448a05e?w=100&q=80) center/cover;'></div>
@@ -634,7 +682,9 @@ else:
                 st.button("Sí, borrar", type="primary", use_container_width=True, on_click=execute_delete_action)
             with col_no:
                 st.button("Cancelar", use_container_width=True, on_click=cancel_delete_action)
-
+        
+        btn_sidebar_tema = "🌞 Modo Día" if st.session_state.tema == "dark" else "🌙 Modo Noche"
+        st.button(btn_sidebar_tema, use_container_width=True, on_click=toggle_theme)
         st.button("🚪 Cerrar Sesión", use_container_width=True, on_click=logout_action)
 
     # --- PANTALLA PRINCIPAL ---
@@ -667,7 +717,7 @@ else:
                     try:
                         os.makedirs("archivos_brutos", exist_ok=True)
                         video_guardado_path = os.path.abspath("archivos_brutos/v.mp4")
-                        espacio_animacion.markdown("<h3>📥 Subiendo tu vídeo...</h3>", unsafe_allow_html=True)
+                        espacio_animacion.markdown("<div class='loader-container'><h3>📥 Subiendo tu vídeo...</h3></div>", unsafe_allow_html=True)
                         with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
                         
                         clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
@@ -678,7 +728,7 @@ else:
 
                         if len(clips_a_renderizar) > 0:
                             for i, cl in enumerate(clips_a_renderizar):
-                                espacio_animacion.markdown(f"<h3>✂️ Renderizando clip {i+1}/{len(clips_a_renderizar)}...</h3>", unsafe_allow_html=True)
+                                espacio_animacion.markdown(f"<div class='loader-container'><h3 style='color:var(--txt-main);'>✂️ Renderizando clip {i+1}/{len(clips_a_renderizar)}...</h3></div>", unsafe_allow_html=True)
                                 r = renderizar_un_clip(i+1, cl["inicio"], cl["fin"], cl["titulo"], st.session_state.whisper_data, st.session_state.video_bruto_path, f"/System/Library/Fonts/Supplemental/{f_def}.ttf", tfs, c_t, c_b, afs, col_s_ass, aout, amv, logo_path)
                                 if r: 
                                     st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
@@ -714,7 +764,7 @@ else:
             st.success("✅ ¡Tus clips están listos! También se han guardado permanentemente en tu Biblioteca.")
             
             col_tit, col_btn = st.columns([3, 1])
-            with col_tit: st.markdown("<h3 style='margin:0;'>Galería Final</h3>", unsafe_allow_html=True)
+            with col_tit: st.markdown("<h3 style='margin:0; color:var(--txt-main);'>Galería Final</h3>", unsafe_allow_html=True)
             with col_btn:
                 zip_path = "archivos_brutos/todos_los_clips.zip"
                 with zipfile.ZipFile(zip_path, 'w') as zipf:
@@ -742,7 +792,7 @@ else:
 
     # --- PESTAÑA DE LA BIBLIOTECA ---
     elif menu_principal == "📚 Mi Biblioteca":
-        st.markdown("<h3>Tus clips guardados en la nube</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:var(--txt-main);'>Tus clips guardados en la nube</h3>", unsafe_allow_html=True)
         st.info("💡 Estos clips se guardan de forma segura durante 7 días.")
         try:
             res_bib = supabase.table("historial_clips").select("*").eq("email_usuario", st.session_state.user_email).order("fecha_creacion", desc=True).execute()
