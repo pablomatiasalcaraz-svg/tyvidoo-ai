@@ -75,7 +75,7 @@ if "access_token" in st.query_params:
         if len(db_check.data) == 0:
             clave_aleatoria = str(random.random()).encode('utf-8')
             hashed = bcrypt.hashpw(clave_aleatoria, bcrypt.gensalt()).decode('utf-8')
-            supabase.table("usuarios").insert({"email": email_real, "password_hash": hashed, "creditos": 30}).execute()
+            supabase.table("usuarios").insert({"email": email_real, "password_hash": hashed, "creditos": 20}).execute()
     except:
         pass
         
@@ -132,7 +132,6 @@ st.markdown("""
     .section-title { font-size: 3rem; font-weight: 900; text-align: center; margin: 100px 0 20px 0; letter-spacing: -1.5px; }
     .section-subtitle { text-align: center; color: #888; margin-bottom: 50px; font-size: 1.2rem; max-width: 600px; margin-left: auto; margin-right: auto;}
     
-    /* --- CSS CORREGIDO PARA ALINEACIÓN DE TARJETAS --- */
     .pricing-card { background: #0A0A0A; border: 1px solid #222; border-radius: 24px; padding: 40px 30px; text-align: center; position: relative; height: 100%; transition: transform 0.3s; display: flex; flex-direction: column; }
     .pricing-card:hover { transform: translateY(-5px); border-color: #444; }
     
@@ -205,7 +204,7 @@ def registrar_usuario(email, password):
     try:
         password_bytes = password.strip()[:72].encode('utf-8')
         hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode('utf-8')
-        supabase.table("usuarios").insert({"email": email, "password_hash": hashed_password, "creditos": 30}).execute()
+        supabase.table("usuarios").insert({"email": email, "password_hash": hashed_password, "creditos": 20}).execute()
         return True, ""
     except Exception as e: 
         return False, str(e)
@@ -459,7 +458,7 @@ if not st.session_state.logged_in:
             st.markdown(f"""
             <div class='pricing-card' style='margin-bottom: 15px;'>
                 <h3 style='color: #fff;'>Starter Gratuito</h3><div class='price'>$0<span>/mes</span></div>
-                <div class='pricing-features'>✔️ <b>30 créditos de regalo</b><br>✔️ Exportación a 720p<br>✔️ Modelos estándar de IA<br>❌ Límite de tamaño</div>
+                <div class='pricing-features'>✔️ <b>20 créditos de regalo</b><br>✔️ Exportación a 720p<br>✔️ Modelos estándar de IA<br>❌ Límite de tamaño</div>
             </div>
             """, unsafe_allow_html=True)
             if st.button("🎁 Crear cuenta gratis", use_container_width=True):
@@ -471,7 +470,7 @@ if not st.session_state.logged_in:
             <div class='pricing-card pro'>
                 <div class='badge'>MÁS POPULAR</div>
                 <h3 style='color: #fff;'>Creator Pro</h3><div class='price'>${precio_pro}<span>{texto_mes}</span></div>
-                <div class='pricing-features'>✔️ <b>200 minutos al mes</b><br>✔️ <b>Sin límite de tamaño</b><br>✔️ Exportación 1080p HD<br>✔️ Sin marca de agua</div>
+                <div class='pricing-features'>✔️ <b>150 créditos al mes</b><br>✔️ <b>Sin límite de tamaño</b><br>✔️ Exportación 1080p HD<br>✔️ Sin marca de agua</div>
                 <a href='{link_pro}' target='_blank' class='pricing-btn-primary'>Empezar como Pro</a>
             </div>
             """, unsafe_allow_html=True)
@@ -505,7 +504,7 @@ if not st.session_state.logged_in:
             Tu privacidad es nuestra prioridad. Los vídeos subidos son procesados de forma temporal y se eliminan de nuestros servidores de renderizado automáticamente. Los clips finales guardados en tu "Biblioteca" se mantienen en servidores seguros y privados asociados a tu cuenta. No compartimos ni vendemos tus datos a terceros.
             
             **Política de Cookies**
-            Tyvidoo utiliza cookies estrictamente necesarias para mantener tu sesión activa y ofrecerte el servicio de la plataforma. También utilizamos cookies analíticas anónimas para mejorar el rendimiento de la web. Puedes configurar tu navegador para rechazar todas las cookies, aunque algunas partes del sitio no funcionarán correctamente.
+            Tyvidoo utiliza cookies strictly necesarias para mantener tu sesión activa y ofrecerte el servicio de la plataforma. También utilizamos cookies analíticas anónimas para mejorar el rendimiento de la web. Puedes configurar tu navegador para rechazar todas las cookies, aunque algunas partes del sitio no funcionarán correctamente.
             
             *Para cualquier consulta legal o relacionada con tus datos, contáctanos en: tyvidooinfo@gmail.com*
             """)
@@ -513,7 +512,7 @@ if not st.session_state.logged_in:
         st.markdown("<p style='text-align:center; color:#555; font-size:12px; margin-top:40px;'>© 2026 Tyvidoo AI. Todos los derechos reservados.</p>", unsafe_allow_html=True)
 
     else:
-        st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 900; font-size: 2.5rem;'>Crea tu cuenta gratis</h2><p style='color: #888;'>Accede a tu espacio de trabajo y recibe tus 30 créditos de bienvenida.</p></div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center; margin-bottom: 30px;'><h2 style='font-weight: 900; font-size: 2.5rem;'>Crea tu cuenta gratis</h2><p style='color: #888;'>Accede a tu espacio de trabajo y recibe tus 20 créditos de bienvenida.</p></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             url_oauth_google = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=https://aware-mercy-production-e677.up.railway.app"
