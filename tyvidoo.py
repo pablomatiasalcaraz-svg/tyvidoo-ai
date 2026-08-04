@@ -537,7 +537,7 @@ if not st.session_state.logged_in:
                 <div style='width: 100%; aspect-ratio: 9/16; background: linear-gradient(to bottom, #001, #003, #001); position: relative; border-radius: 8px; overflow: hidden;'>
                     <div style='position: absolute; top: 15%; width: 100%; text-align: center;'><span style='background: #111; color: #0ff; font-family: Impact, sans-serif; font-size: 14px; padding: 4px 8px; text-transform: uppercase;'>MOMENTO</span></div>
                     <div style='position: absolute; top: 35%; bottom: 35%; left: 0; right: 0; background: url(https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80) center/cover;'></div>
-                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: #f0f; font-family: Impact, sans-serif; font-size: 18px; text-shadow: 0 0 5px #f0f;'>GAMING</div>
+                    <div style='position: absolute; bottom: 20%; width: 100%; text-align: center; color: #f0f; font-family: Impact, sans-serif; font-size: 10px; text-shadow: 0 0 5px #f0f;'>GAMING</div>
                 </div>
             </div><h4 style='margin-top:15px; text-align:center;'>Estilo Neón 👾</h4>""", unsafe_allow_html=True)
 
@@ -851,7 +851,7 @@ else:
     # --- PESTAÑA DE LA BIBLIOTECA ---
     elif menu_principal == "📚 Mi Biblioteca":
         st.markdown("<h3 style='color:var(--txt-main);'>Tus clips guardados en la nube</h3>", unsafe_allow_html=True)
-        st.info("💡 Estos clips se guardan de forma segura durante 7 días.")
+        st.info("💡 Estos clips se guardan de forma segura durante 24 horas.")
         try:
             res_bib = supabase.table("historial_clips").select("*").eq("email_usuario", st.session_state.user_email).order("fecha_creacion", desc=True).execute()
             if not res_bib.data:
