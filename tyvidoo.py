@@ -66,13 +66,11 @@ if st.session_state.tema == "dark":
         --card-bg: rgba(255,255,255,0.02);
         --card-border: rgba(255,255,255,0.05);
         --card-hover: rgba(255,255,255,0.2);
-        --btn-sec-bg: rgba(255,255,255,0.05);
-        --btn-sec-hover: rgba(255,255,255,0.1);
+        --sidebar-bg: #0A0A0A;
         --pricing-bg: #0A0A0A;
         --pricing-pro-bg: linear-gradient(180deg, #110508 0%, #0A0A0A 100%);
         --glass-card: rgba(255,255,255,0.03);
         --dash-header: linear-gradient(135deg, #111111 0%, #050505 100%);
-        --sidebar-bg: #0A0A0A;
     }
     """
 else:
@@ -84,13 +82,11 @@ else:
         --card-bg: #FFFFFF;
         --card-border: rgba(0,0,0,0.1);
         --card-hover: rgba(0,0,0,0.3);
-        --btn-sec-bg: rgba(0,0,0,0.05);
-        --btn-sec-hover: rgba(0,0,0,0.1);
+        --sidebar-bg: #FFFFFF;
         --pricing-bg: #FFFFFF;
         --pricing-pro-bg: linear-gradient(180deg, #FFF0F2 0%, #FFFFFF 100%);
         --glass-card: #FFFFFF;
         --dash-header: linear-gradient(135deg, #FFFFFF 0%, #E8EBEF 100%);
-        --sidebar-bg: #FFFFFF;
     }
     """
 
@@ -109,13 +105,61 @@ st.markdown(f"""
     h1, h2, h3, h4, h5, h6 {{ color: var(--txt-main) !important; }}
     .hero-subtitle, .section-subtitle {{ color: var(--txt-muted) !important; }}
     
-    /* --- ARREGLO DE BARRA LATERAL Y ETIQUETAS --- */
+    /* --- ARREGLO BRUTAL PARA EL MENÚ LATERAL Y COMPONENTES REBELDES --- */
     [data-testid="stSidebar"] {{ background-color: var(--sidebar-bg) !important; border-right: 1px solid var(--card-border) !important; }}
     [data-testid="stSidebarHeader"] {{ background-color: var(--sidebar-bg) !important; }}
-    [data-testid="stWidgetLabel"] p, .stFileUploader label {{ color: var(--txt-main) !important; font-weight: 600 !important; }}
-    .stSlider div[data-testid="stThumbValue"] {{ color: var(--txt-main) !important; }}
-    .stSlider div[data-testid="stTickBarMin"], .stSlider div[data-testid="stTickBarMax"] {{ color: var(--txt-muted) !important; }}
     
+    [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] span, 
+    [data-testid="stSidebar"] label,
+    div[role="radiogroup"] p, 
+    div[role="radiogroup"] label,
+    .stSlider p, 
+    .stSlider span, 
+    .stFileUploader p, 
+    .stFileUploader span, 
+    .stFileUploader label, 
+    .stFileUploader small {{
+        color: var(--txt-main) !important;
+    }}
+    
+    .stSlider div[data-testid="stTickBarMin"], .stSlider div[data-testid="stTickBarMax"] {{ color: var(--txt-muted) !important; }}
+
+    /* --- ARREGLO PARA LA ZONA DE SUBIDA (FILE UPLOADER) --- */
+    [data-testid="stFileUploadDropzone"], section[data-testid="stFileUploadDropzone"] {{
+        background-color: var(--card-bg) !important;
+        border: 2px dashed var(--txt-muted) !important;
+        border-radius: 16px !important;
+    }}
+    
+    /* --- ARREGLO PARA LOS BOTONES --- */
+    [data-testid="baseButton-primary"] {{
+        background: linear-gradient(90deg, #E94057, #F27121) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 12px 30px !important;
+        box-shadow: 0 4px 15px rgba(233,64,87,0.3) !important;
+        transition: transform 0.2s !important;
+    }}
+    [data-testid="baseButton-primary"] p, [data-testid="baseButton-primary"] span {{
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 16px !important;
+    }}
+    [data-testid="baseButton-primary"]:hover {{ transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 20px rgba(233,64,87,0.5) !important; }}
+
+    [data-testid="baseButton-secondary"] {{
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
+        border-radius: 12px !important;
+        transition: all 0.2s !important;
+    }}
+    [data-testid="baseButton-secondary"] p, [data-testid="baseButton-secondary"] span {{
+        color: var(--txt-main) !important;
+    }}
+    [data-testid="baseButton-secondary"]:hover {{ background-color: var(--card-hover) !important; transform: translateY(-2px); }}
+    
+    /* ESTILOS GLOBALES RESTANTES */
     .top-nav {{ display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--card-border); margin-bottom: 50px; }}
     .nav-logo {{ font-size: 26px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #E94057, #F27121); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
     
@@ -129,15 +173,6 @@ st.markdown(f"""
     
     .glass-card {{ background: var(--glass-card); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; text-align: center; transition: all 0.3s ease; }}
     .glass-card:hover {{ transform: translateY(-5px); border: 1px solid var(--card-hover); }}
-
-    .stButton>button[kind="primary"] {{ background-color: var(--txt-main) !important; color: var(--bg-main) !important; font-weight: 800 !important; border-radius: 12px !important; border: none !important; font-size: 16px !important; padding: 12px 30px !important; width: 100% !important; margin-top: 10px; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
-    .stButton>button[kind="primary"]:hover {{ transform: translateY(-2px) scale(1.02); opacity: 0.9; }}
-    
-    .stButton>button[kind="secondary"] {{ background-color: var(--btn-sec-bg) !important; color: var(--txt-main) !important; border: 1px solid var(--card-border) !important; padding: 12px !important; border-radius: 12px !important; transition: all 0.2s; }}
-    .stButton>button[kind="secondary"]:hover {{ background-color: var(--btn-sec-hover) !important; transform: translateY(-2px);}}
-    
-    .stDownloadButton>button {{ background-color: var(--pricing-bg) !important; color: var(--txt-main) !important; font-weight: 600 !important; border-radius: 8px !important; border: 1px solid var(--card-border) !important; }}
-    .stDownloadButton>button:hover {{ background-color: var(--btn-sec-bg) !important; border: 1px solid var(--card-hover) !important;}}
     
     .stTabs [data-baseweb="tab-list"] {{ gap: 24px; justify-content: center; }}
     .stTabs [data-baseweb="tab"] {{ height: 50px; white-space: pre-wrap; background-color: transparent; border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px; font-weight: 600; font-size: 16px; color: var(--txt-muted);}}
@@ -177,15 +212,13 @@ st.markdown(f"""
     .pricing-btn-primary {{ display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background: linear-gradient(90deg, #E94057, #F27121); border:none; color:white !important; font-weight:800; text-decoration:none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(233,64,87,0.3); margin-top: auto; }}
     .pricing-btn-primary:hover {{ transform: scale(1.03); box-shadow: 0 6px 20px rgba(233,64,87,0.5); }}
     .pricing-btn-secondary {{ display:block; text-align:center; width:100%; padding:16px; border-radius:12px; background:transparent; border:1px solid var(--card-border); color:var(--txt-main) !important; text-decoration:none; font-weight: 600; transition: background 0.2s; margin-top: auto; }}
-    .pricing-btn-secondary:hover {{ background: var(--btn-sec-bg); border-color: var(--txt-muted); }}
+    .pricing-btn-secondary:hover {{ background: var(--card-bg); border-color: var(--txt-muted); }}
     
     .footer {{ margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--card-border); }}
     
-    /* Prevenir que Streamlit oscurezca inputs en modo claro */
     .stTextInput input {{ background-color: var(--bg-main) !important; color: var(--txt-main) !important; border: 1px solid var(--card-border) !important; }}
     </style>
 """, unsafe_allow_html=True)
-
 
 # --- EL "CABALLO DE TROYA" PARA GOOGLE ---
 components.html("""
@@ -628,10 +661,10 @@ else:
     with st.sidebar:
         st.markdown("<h2 style='font-weight:900;'>✂️ Tyvidoo</h2>", unsafe_allow_html=True)
         st.caption(st.session_state.user_email)
-        st.markdown(f"<div style='background: var(--card-bg); border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid var(--card-border);'><h2 style='margin:0; font-weight: 900; color: var(--txt-main);'>{creditos}</h2><span style='font-size: 13px; color: var(--txt-muted); text-transform: uppercase; letter-spacing: 1px;'>créditos restantes</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='background: var(--card-bg); border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid var(--card-border); box-shadow: 0 4px 10px rgba(0,0,0,0.05);'><h2 style='margin:0; font-weight: 900; color: var(--txt-main);'>{creditos}</h2><span style='font-size: 13px; color: var(--txt-muted); text-transform: uppercase; letter-spacing: 1px;'>créditos restantes</span></div>", unsafe_allow_html=True)
         
         link_recarga = f"https://buy.stripe.com/7sY3co2bLaR62P93O16wE02?client_reference_id={st.session_state.user_email}"
-        st.markdown(f"<a href='{link_recarga}' target='_blank' style='display:block; text-align:center; width:100%; padding:12px; border-radius:10px; background: linear-gradient(90deg, #8A2387, #E94057); border:none; color:white; font-weight:bold; text-decoration:none; margin-bottom: 25px;'>⚡ Recargar Créditos</a>", unsafe_allow_html=True)
+        st.markdown(f"<a href='{link_recarga}' target='_blank' style='display:block; text-align:center; width:100%; padding:12px; border-radius:10px; background: linear-gradient(90deg, #E94057, #F27121); border:none; color:white; font-weight:bold; text-decoration:none; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(233,64,87,0.3);'>⚡ Recargar Créditos</a>", unsafe_allow_html=True)
         
         menu_principal = st.radio("Menú", ["✂️ Crear Clips", "📚 Mi Biblioteca"], label_visibility="collapsed")
         st.divider()
