@@ -82,6 +82,8 @@ else:
         --card-bg: #FFFFFF;
         --card-border: rgba(0,0,0,0.1);
         --card-hover: rgba(0,0,0,0.3);
+        --btn-sec-bg: rgba(0,0,0,0.05);
+        --btn-sec-hover: rgba(0,0,0,0.1);
         --sidebar-bg: #FFFFFF;
         --pricing-bg: #FFFFFF;
         --pricing-pro-bg: linear-gradient(180deg, #FFF0F2 0%, #FFFFFF 100%);
@@ -101,65 +103,70 @@ st.markdown(f"""
     footer {{visibility: hidden;}}
     .block-container {{ padding-top: 1rem !important; max-width: 1200px; padding-bottom: 5rem;}}
     
-    /* Regla para forzar que los textos obedezcan siempre al tema activo */
+    /* --- REGLAS ESTRICTAS DE CONTRASTE PARA TEXTOS --- */
     h1, h2, h3, h4, h5, h6 {{ color: var(--txt-main) !important; }}
-    .hero-subtitle, .section-subtitle {{ color: var(--txt-muted) !important; }}
+    p, span, label, small {{ color: var(--txt-main) !important; }}
     
-    /* --- ARREGLO BRUTAL PARA EL MENÚ LATERAL Y COMPONENTES REBELDES --- */
+    /* Excepciones donde sí queremos gris suave */
+    .hero-subtitle, .section-subtitle, .pricing-features, 
+    .stSlider div[data-testid="stTickBarMin"], 
+    .stSlider div[data-testid="stTickBarMax"] {{ 
+        color: var(--txt-muted) !important; 
+    }}
+    
+    /* --- ARREGLO DEFINITIVO PARA LA CAJA NEGRA DE UPLOAD --- */
+    [data-testid="stFileUploadDropzone"] {{ 
+        background-color: var(--card-bg) !important; 
+        border: 2px dashed var(--txt-muted) !important; 
+        border-radius: 16px !important;
+        padding: 25px !important;
+    }}
+    [data-testid="stFileUploadDropzone"] div,
+    [data-testid="stFileUploadDropzone"] span,
+    [data-testid="stFileUploadDropzone"] small {{
+        color: var(--txt-main) !important; /* Fuerza a que las letras se lean */
+    }}
+    [data-testid="stFileUploadDropzone"] button {{ 
+        background-color: var(--bg-main) !important; 
+        color: var(--txt-main) !important; 
+        border: 1px solid var(--txt-main) !important; 
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }}
+    
+    /* --- ARREGLO DE BARRA LATERAL --- */
     [data-testid="stSidebar"] {{ background-color: var(--sidebar-bg) !important; border-right: 1px solid var(--card-border) !important; }}
     [data-testid="stSidebarHeader"] {{ background-color: var(--sidebar-bg) !important; }}
     
-    [data-testid="stSidebar"] p, 
-    [data-testid="stSidebar"] span, 
-    [data-testid="stSidebar"] label,
-    div[role="radiogroup"] p, 
-    div[role="radiogroup"] label,
-    .stSlider p, 
-    .stSlider span, 
-    .stFileUploader p, 
-    .stFileUploader span, 
-    .stFileUploader label, 
-    .stFileUploader small {{
-        color: var(--txt-main) !important;
-    }}
-    
-    .stSlider div[data-testid="stTickBarMin"], .stSlider div[data-testid="stTickBarMax"] {{ color: var(--txt-muted) !important; }}
-
-    /* --- ARREGLO PARA LA ZONA DE SUBIDA (FILE UPLOADER) --- */
-    [data-testid="stFileUploadDropzone"], section[data-testid="stFileUploadDropzone"] {{
-        background-color: var(--card-bg) !important;
-        border: 2px dashed var(--txt-muted) !important;
-        border-radius: 16px !important;
-    }}
-    
-    /* --- ARREGLO PARA LOS BOTONES --- */
-    [data-testid="baseButton-primary"] {{
-        background: linear-gradient(90deg, #E94057, #F27121) !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 12px 30px !important;
-        box-shadow: 0 4px 15px rgba(233,64,87,0.3) !important;
-        transition: transform 0.2s !important;
+    /* --- BOTONES PRINCIPALES Y SECUNDARIOS --- */
+    [data-testid="baseButton-primary"] {{ 
+        background: linear-gradient(90deg, #E94057, #F27121) !important; 
+        border: none !important; 
+        border-radius: 12px !important; 
+        padding: 12px 30px !important; 
+        box-shadow: 0 4px 15px rgba(233,64,87,0.3) !important; 
+        transition: transform 0.2s !important; 
     }}
     [data-testid="baseButton-primary"] p, [data-testid="baseButton-primary"] span {{
-        color: #ffffff !important;
-        font-weight: 800 !important;
+        color: #ffffff !important; 
+        font-weight: 800 !important; 
         font-size: 16px !important;
     }}
     [data-testid="baseButton-primary"]:hover {{ transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 20px rgba(233,64,87,0.5) !important; }}
-
-    [data-testid="baseButton-secondary"] {{
-        background-color: var(--card-bg) !important;
-        border: 1px solid var(--card-border) !important;
-        border-radius: 12px !important;
-        transition: all 0.2s !important;
+    
+    [data-testid="baseButton-secondary"] {{ 
+        background-color: var(--card-bg) !important; 
+        border: 1px solid var(--card-border) !important; 
+        border-radius: 12px !important; 
+        transition: all 0.2s !important; 
     }}
     [data-testid="baseButton-secondary"] p, [data-testid="baseButton-secondary"] span {{
-        color: var(--txt-main) !important;
+        color: var(--txt-main) !important; 
+        font-weight: 600 !important;
     }}
     [data-testid="baseButton-secondary"]:hover {{ background-color: var(--card-hover) !important; transform: translateY(-2px); }}
     
-    /* ESTILOS GLOBALES RESTANTES */
+    /* --- ESTÉTICA GENERAL --- */
     .top-nav {{ display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--card-border); margin-bottom: 50px; }}
     .nav-logo {{ font-size: 26px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #E94057, #F27121); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
     
@@ -176,7 +183,7 @@ st.markdown(f"""
     
     .stTabs [data-baseweb="tab-list"] {{ gap: 24px; justify-content: center; }}
     .stTabs [data-baseweb="tab"] {{ height: 50px; white-space: pre-wrap; background-color: transparent; border-radius: 4px 4px 0px 0px; gap: 1px; padding-top: 10px; padding-bottom: 10px; font-weight: 600; font-size: 16px; color: var(--txt-muted);}}
-    .stTabs [aria-selected="true"] {{ color: var(--txt-main) !important; border-bottom: 2px solid #E94057 !important; }}
+    .stTabs [aria-selected="true"] {{ border-bottom: 2px solid #E94057 !important; }}
     
     .marquee-wrapper {{ overflow: hidden; white-space: nowrap; margin-top: 60px; padding: 30px 0; border-top: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border); background: var(--bg-main); }}
     .marquee-content {{ display: inline-block; animation: marquee 35s linear infinite; }}
@@ -193,15 +200,15 @@ st.markdown(f"""
     .pricing-card.pro {{ border: 2px solid #E94057; background: var(--pricing-pro-bg); transform: scale(1.05); z-index: 10; box-shadow: 0 10px 40px rgba(233, 64, 87, 0.2); }}
     .pricing-card.pro:hover {{ transform: scale(1.05) translateY(-5px); box-shadow: 0 15px 50px rgba(233, 64, 87, 0.3); }}
     
-    .badge {{ position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #E94057, #F27121); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(233,64,87,0.4);}}
+    .badge {{ position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #E94057, #F27121); color: #fff !important; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(233,64,87,0.4);}}
     
-    .price {{ font-size: 3.5rem; font-weight: 900; margin: 20px 0; color: var(--txt-main) !important; min-height: 120px; display: flex; flex-direction: column; justify-content: center; }}
-    .price span {{ font-size: 0.9rem; color: var(--txt-muted); font-weight: 500; display: block; margin-top: 8px; line-height: 1.2; }}
+    .price {{ font-size: 3.5rem; font-weight: 900; margin: 20px 0; min-height: 120px; display: flex; flex-direction: column; justify-content: center; }}
+    .price span {{ font-size: 0.9rem; color: var(--txt-muted) !important; font-weight: 500; display: block; margin-top: 8px; line-height: 1.2; }}
     
-    .pricing-features {{ text-align: left; margin: 20px 0 40px 0; color: var(--txt-muted); font-size: 15px; line-height: 2.2; flex-grow: 1; }}
+    .pricing-features {{ text-align: left; margin: 20px 0 40px 0; font-size: 15px; line-height: 2.2; flex-grow: 1; }}
     
     .google-custom-btn {{
-        display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #111;
+        display: flex; align-items: center; justify-content: center; background-color: #ffffff; color: #111 !important;
         font-weight: 700; font-size: 16px; border-radius: 14px; padding: 14px 24px;
         text-decoration: none; border: 1px solid #ddd; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         transition: all 0.2s ease; width: 100%; margin-top: 15px; cursor: pointer;
@@ -219,6 +226,7 @@ st.markdown(f"""
     .stTextInput input {{ background-color: var(--bg-main) !important; color: var(--txt-main) !important; border: 1px solid var(--card-border) !important; }}
     </style>
 """, unsafe_allow_html=True)
+
 
 # --- EL "CABALLO DE TROYA" PARA GOOGLE ---
 components.html("""
