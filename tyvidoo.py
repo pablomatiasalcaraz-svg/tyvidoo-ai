@@ -113,22 +113,21 @@ st.markdown(f"""
         color: var(--txt-muted) !important; 
     }}
     
-    /* --- ARREGLO DEFINITIVO PARA LA CAJA NEGRA DE UPLOAD --- */
-    div[data-testid="stFileUploaderDropzone"] {{ 
-        background: var(--card-bg) !important; /* Mata el fondo negro de Streamlit */
-        background-color: var(--card-bg) !important; 
-        border: 2px dashed var(--txt-muted) !important; 
+    /* --- ELIMINACIÓN TOTAL DEL FONDO NEGRO DE STREAMLIT --- */
+    div[data-testid="stFileUploader"] > section {{
+        background-color: var(--card-bg) !important;
+        background: var(--card-bg) !important;
+        border: 2px dashed var(--txt-muted) !important;
         border-radius: 16px !important;
         padding: 25px !important;
     }}
-    div[data-testid="stFileUploaderDropzone"] * {{
-        color: var(--txt-main) !important; 
+    div[data-testid="stFileUploader"] > section * {{
+        color: var(--txt-main) !important;
     }}
-    div[data-testid="stFileUploaderDropzone"] button {{ 
-        background: var(--bg-main) !important;
-        background-color: var(--bg-main) !important; 
-        color: var(--txt-main) !important; 
-        border: 1px solid var(--txt-main) !important; 
+    div[data-testid="stFileUploader"] > section button {{
+        background-color: var(--bg-main) !important;
+        color: var(--txt-main) !important;
+        border: 1px solid var(--txt-muted) !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
     }}
