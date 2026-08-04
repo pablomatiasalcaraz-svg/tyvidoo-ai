@@ -72,6 +72,7 @@ if st.session_state.tema == "dark":
         --pricing-pro-bg: linear-gradient(180deg, #110508 0%, #0A0A0A 100%);
         --glass-card: rgba(255,255,255,0.03);
         --dash-header: linear-gradient(135deg, #111111 0%, #050505 100%);
+        --sidebar-bg: #0A0A0A;
     }
     """
 else:
@@ -89,6 +90,7 @@ else:
         --pricing-pro-bg: linear-gradient(180deg, #FFF0F2 0%, #FFFFFF 100%);
         --glass-card: #FFFFFF;
         --dash-header: linear-gradient(135deg, #FFFFFF 0%, #E8EBEF 100%);
+        --sidebar-bg: #FFFFFF;
     }
     """
 
@@ -106,6 +108,13 @@ st.markdown(f"""
     /* Regla para forzar que los textos obedezcan siempre al tema activo */
     h1, h2, h3, h4, h5, h6 {{ color: var(--txt-main) !important; }}
     .hero-subtitle, .section-subtitle {{ color: var(--txt-muted) !important; }}
+    
+    /* --- ARREGLO DE BARRA LATERAL Y ETIQUETAS --- */
+    [data-testid="stSidebar"] {{ background-color: var(--sidebar-bg) !important; border-right: 1px solid var(--card-border) !important; }}
+    [data-testid="stSidebarHeader"] {{ background-color: var(--sidebar-bg) !important; }}
+    [data-testid="stWidgetLabel"] p, .stFileUploader label {{ color: var(--txt-main) !important; font-weight: 600 !important; }}
+    .stSlider div[data-testid="stThumbValue"] {{ color: var(--txt-main) !important; }}
+    .stSlider div[data-testid="stTickBarMin"], .stSlider div[data-testid="stTickBarMax"] {{ color: var(--txt-muted) !important; }}
     
     .top-nav {{ display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--card-border); margin-bottom: 50px; }}
     .nav-logo {{ font-size: 26px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #E94057, #F27121); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
@@ -619,7 +628,7 @@ else:
     with st.sidebar:
         st.markdown("<h2 style='font-weight:900;'>✂️ Tyvidoo</h2>", unsafe_allow_html=True)
         st.caption(st.session_state.user_email)
-        st.markdown(f"<div style='background: var(--card-bg); border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid var(--card-border);'><h2 style='margin:0; font-weight: 900;'>{creditos}</h2><span style='font-size: 13px; color: var(--txt-muted); text-transform: uppercase; letter-spacing: 1px;'>créditos restantes</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='background: var(--card-bg); border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid var(--card-border);'><h2 style='margin:0; font-weight: 900; color: var(--txt-main);'>{creditos}</h2><span style='font-size: 13px; color: var(--txt-muted); text-transform: uppercase; letter-spacing: 1px;'>créditos restantes</span></div>", unsafe_allow_html=True)
         
         link_recarga = f"https://buy.stripe.com/7sY3co2bLaR62P93O16wE02?client_reference_id={st.session_state.user_email}"
         st.markdown(f"<a href='{link_recarga}' target='_blank' style='display:block; text-align:center; width:100%; padding:12px; border-radius:10px; background: linear-gradient(90deg, #8A2387, #E94057); border:none; color:white; font-weight:bold; text-decoration:none; margin-bottom: 25px;'>⚡ Recargar Créditos</a>", unsafe_allow_html=True)
@@ -628,12 +637,12 @@ else:
         st.divider()
         
         if menu_principal == "✂️ Crear Clips":
-            st.markdown("<b>⚙️ Ajustes de Búsqueda</b>", unsafe_allow_html=True)
+            st.markdown("<b style='color: var(--txt-main);'>⚙️ Ajustes de Búsqueda</b>", unsafe_allow_html=True)
             cant_clips = st.slider("Clips a extraer", 1, 30, 10)
             dur_clips = st.slider("Duración aprox. (seg)", 15, 90, (20, 45))
             
             st.divider()
-            st.markdown("<b>🎨 Elige tu Diseño Final</b>", unsafe_allow_html=True)
+            st.markdown("<b style='color: var(--txt-main);'>🎨 Elige tu Diseño Final</b>", unsafe_allow_html=True)
             
             col_p1, col_p2, col_p3 = st.columns(3)
             b1 = "2px solid #E94057" if st.session_state.plantilla == "Hormozi 💛" else "1px solid var(--card-border)"
@@ -724,7 +733,7 @@ else:
                     try:
                         os.makedirs("archivos_brutos", exist_ok=True)
                         video_guardado_path = os.path.abspath("archivos_brutos/v.mp4")
-                        espacio_animacion.markdown("<div class='loader-container'><h3>📥 Subiendo tu vídeo...</h3></div>", unsafe_allow_html=True)
+                        espacio_animacion.markdown("<div class='loader-container'><h3 style='color:var(--txt-main);'>📥 Subiendo tu vídeo...</h3></div>", unsafe_allow_html=True)
                         with open(video_guardado_path, "wb") as f: f.write(archivo_subido.getbuffer())
                         
                         clips_a_renderizar = procesar_video_local(video_guardado_path, cant_clips, dur_clips[0], dur_clips[1], espacio_animacion)
@@ -735,7 +744,7 @@ else:
 
                         if len(clips_a_renderizar) > 0:
                             for i, cl in enumerate(clips_a_renderizar):
-                                espacio_animacion.markdown(f"<div class='loader-container'><h3>✂️ Renderizando clip {i+1}/{len(clips_a_renderizar)}...</h3></div>", unsafe_allow_html=True)
+                                espacio_animacion.markdown(f"<div class='loader-container'><h3 style='color:var(--txt-main);'>✂️ Renderizando clip {i+1}/{len(clips_a_renderizar)}...</h3></div>", unsafe_allow_html=True)
                                 r = renderizar_un_clip(i+1, cl["inicio"], cl["fin"], cl["titulo"], st.session_state.whisper_data, st.session_state.video_bruto_path, f"/System/Library/Fonts/Supplemental/{f_def}.ttf", tfs, c_t, c_b, afs, col_s_ass, aout, amv, logo_path)
                                 if r: 
                                     st.session_state.mis_clips_data.append({"id": i+1, "inicio": cl["inicio"], "fin": cl["fin"], "titulo": cl["titulo"], "ruta": r})
@@ -771,7 +780,7 @@ else:
             st.success("✅ ¡Tus clips están listos! También se han guardado permanentemente en tu Biblioteca.")
             
             col_tit, col_btn = st.columns([3, 1])
-            with col_tit: st.markdown("<h3 style='margin:0;'>Galería Final</h3>", unsafe_allow_html=True)
+            with col_tit: st.markdown("<h3 style='margin:0; color:var(--txt-main);'>Galería Final</h3>", unsafe_allow_html=True)
             with col_btn:
                 zip_path = "archivos_brutos/todos_los_clips.zip"
                 with zipfile.ZipFile(zip_path, 'w') as zipf:
@@ -799,7 +808,7 @@ else:
 
     # --- PESTAÑA DE LA BIBLIOTECA ---
     elif menu_principal == "📚 Mi Biblioteca":
-        st.markdown("<h3>Tus clips guardados en la nube</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:var(--txt-main);'>Tus clips guardados en la nube</h3>", unsafe_allow_html=True)
         st.info("💡 Estos clips se guardan de forma segura durante 7 días.")
         try:
             res_bib = supabase.table("historial_clips").select("*").eq("email_usuario", st.session_state.user_email).order("fecha_creacion", desc=True).execute()
